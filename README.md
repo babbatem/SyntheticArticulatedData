@@ -5,4 +5,4 @@ Setup:
 ```pip install -r requirements.txt```
 
 Example generation:
-```python generate_data --n 10 --dir ./test --obj microwave --masked --debug```
+```python generate_data.py --n 10 --dir ./test --obj microwave --masked --debug```
