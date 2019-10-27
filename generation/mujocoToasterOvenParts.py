@@ -1,19 +1,32 @@
 import numpy as np
 import pyro
 import pyro.distributions as dist
+import torch
+import transforms3d as tf3d
 
-from generation.ArticulatedObjs import Microwave, ArticulatedObject
-from generation.utils import sample_quat, sample_pose, make_string, make_single_string, make_quat_string, get_cam_relative_params2, angle_to_quat, get_cam_params
+from magic.data.generation.ArticulatedObjs import Microwave, ArticulatedObject
+from magic.data.generation.utils import sample_quat, sample_pose, make_string, make_single_string, make_quat_string, get_cam_relative_params2, angle_to_quat, get_cam_params
 
-# TODO: fix range given new camera parameters
-def sample_toaster():
-    length=pyro.sample("length", dist.Uniform(8/2*0.0254, 20/2*0.0254)).item()
-    width =pyro.sample('width',  dist.Uniform(16/2*0.0254, 24/2*0.0254)).item()
-    height=pyro.sample('height', dist.Uniform(8/2*0.0254, 20/2*0.0254)).item()
-    thickness=pyro.sample('thicc', dist.Uniform(0.02 / 2, 0.05 / 2)).item()
-    # left=pyro.sample('lefty', dist.Bernoulli(0.5)).item()
+d_len = dist.Uniform(8/2*0.0254, 20/2*0.0254)
+d_width = dist.Uniform(16/2*0.0254, 24/2*0.0254)
+d_height = dist.Uniform(8/2*0.0254, 20/2*0.0254)
+d_thicc = dist.Uniform(0.02 / 2, 0.05 / 2)
+d_mass = dist.Uniform(5.0, 30.0)
+
+def sample_toaster(mean_flag):
+    if mean_flag:
+        length = d_len.mean
+        width = d_width.mean
+        height = d_height.mean
+        thickness=d_thicc.mean
+        mass = d_mass.mean
+    else:
+        length=pyro.sample("length",d_len).item()
+        width =pyro.sample('width',d_width).item()
+        height=pyro.sample('height',d_height).item()
+        thickness=pyro.sample('thicc',d_thicc).item()
+        mass = pyro.sample('mass', d_mass).item()
     left = False
-    mass=pyro.sample('mass', dist.Uniform(5.0, 30.0))
     return length, width, height, thickness, left, mass
 
 def sample_t_handle(side_width):
@@ -22,12 +35,7 @@ def sample_t_handle(side_width):
     HANDLE_HEIGHT=pyro.sample('hh', dist.Uniform(0.01, 0.04)).item()
     return HANDLE_LEN, HANDLE_WIDTH, HANDLE_HEIGHT
 
-def build_toaster(length, width, height, thicc, left, set_pose=None):
-
-    # TODO: sample shape better
-    # TODO: figure out weird door behavior
-    # TODO: sample mass and include
-
+def build_toaster(length, width, height, thicc, left, set_pose=None, set_rot=None):
     base_length=length
     base_width=width
     base_height=thicc
@@ -35,20 +43,9 @@ def build_toaster(length, width, height, thicc, left, set_pose=None):
     if not set_pose:
         base_xyz, base_angle = sample_pose()
         base_quat = angle_to_quat(base_angle)
-
-
-        # base_quat = sample_quat()
     else:
-        # # NOTE: BROKEN
-        base_xyz = set_pose
-        base_angle = 0.0
-        base_quat = angle_to_quat(base_angle)
-
-    # base_xyz = (2.0, 0.0, 0.0)
-    # base_quat = (0.0, 0.0, 0.0, 1.0)
-
-    # base_xyz = (2,0,0)
-    # base_quat = (1.0, 0.0,0.0,0.0)
+        base_xyz = tuple(set_pose)
+        base_quat = tuple(set_rot)
 
     base_origin=make_string(base_xyz)
     base_orientation=make_quat_string(base_quat)
@@ -98,20 +95,12 @@ def build_toaster(length, width, height, thicc, left, set_pose=None):
     zfar_str = make_single_string(zfar)
     fovy_str = make_single_string(fovy)
 
-    ############################################################################
-    ######################         FOR TESTING            ######################
-    ############################################################################
     post_params = get_cam_relative_params2(cab)
     # print(post_params)
     axis=post_params[:3]
     axquat=post_params[3:7]
     ax_string = make_string(tuple(axis))
     axquat_string = make_quat_string(axquat)
-
-    # print(ax_string)
-    # print(axquat_string)
-    ############################################################################
-    ############################################################################
 
     xml=write_xml(ax_string, axquat_string, base_origin, base_orientation, base_size, \
                     left_origin, right_origin, side_size, \
@@ -150,6 +139,7 @@ def write_xml(ax_string, axquat_string, base_origin, base_orientation, base_size
     <size njmax="500" nconmax="100" />
     <actuator>
         <velocity joint="bottom_left_hinge" name="viva_revolution" kv='10'></velocity>
+        <!--position joint="bottom_left_hinge" name="viva_position" kp='10'></position-->
     </actuator>
     <asset>
         <texture builtin="flat" name="tabletex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
@@ -199,19 +189,21 @@ def write_xml(ax_string, axquat_string, base_origin, base_orientation, base_size
         </body>
         <body name="external_camera_body_0" pos="0.0 0 0.00">
             <camera euler="-1.57 1.57 0.0" fovy='''+fovy+''' name="external_camera_0" pos="0.0 0 0"></camera>
+            <inertial pos= " 0.00 0.0 0.000000 " mass="1" diaginertia="1 1 1" />
+            <joint name="cam_j" pos="0.0 0 0" axis = "1 0 0" type="free" />
         </body>
         <!--body> name="x_axis" pos="0.0 0 0.00">
                 <geom size="10 0.01 0.01" type="box" material="geomHandle" name="who cares1"/>
                 <body name="TESTING" pos='''+ax_string+''' quat='''+axquat_string+'''>
                     <geom size="0.1" type="sphere"/>
                 </body>
-        </body-->
+        </body>
         <body> name="y_axis" pos="0.0 0 0.00">
                 <geom size="0.01 10 0.01" type="box" material="geomHandle" name="who cares2"/>
         </body>
         <body> name="z_axis" pos="0.0 0 0.00">
                 <geom size="0.01 0.01 10" type="box" material="geomHandle" name="who cares3"/>
-        </body>
+        </body-->
     </worldbody>
 </mujoco>'''
 
@@ -239,11 +231,5 @@ def test():
         t += 1
 
 if __name__ == "__main__":
-    # from threading import Thread
-    # from os import system, makedirs, path
-    # import time
     for i in range(200):
-        # thread = Thread()
-        # thread.run = lambda: test()
-        # time.sleep(10)
         test()

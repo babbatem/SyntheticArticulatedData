@@ -2,8 +2,8 @@ import os
 import time
 import argparse
 
-from generation.generator import SceneGenerator
-from generation.inspect_data import make_animations
+from magic.data.generation.generator import SceneGenerator
+from magic.data.generation.inspect_data import make_animations
 
 def main(args):
 
@@ -22,7 +22,7 @@ def main(args):
 	scenegen.savedir = train_dir
 
 	# generate train scenes
-	scenegen.generate_scenes(args.n, args.obj)
+	scenegen.generate_scenes(args.n, args.obj, mean_flag=args.mean, left_only=args.left_only, cute_flag=args.cute)
 
 	# set generator's target directory for test data
 	test_dir = os.path.join(args.dir, args.obj + '-test')
@@ -46,4 +46,7 @@ parser.add_argument('--dir', type=str, default='../microtrain/')
 parser.add_argument('--obj', type=str, default='microwave')
 parser.add_argument('--masked', action='store_true', default=False, help='remove background of depth images?')
 parser.add_argument('--debug', action='store_true', default=False)
+parser.add_argument('--mean', action='store_true', default=False, help='generate the mean object')
+parser.add_argument('--cute', action='store_true', default=False, help='generate nice shots.')
+parser.add_argument('--left-only', action='store_true', default=False, help='generate only left-opening cabinets')
 main(parser.parse_args())

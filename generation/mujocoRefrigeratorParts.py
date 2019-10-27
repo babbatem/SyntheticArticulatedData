@@ -1,18 +1,32 @@
 import numpy as np
 import pyro
 import pyro.distributions as dist
+import torch
+import transforms3d as tf3d
 
-from generation.ArticulatedObjs import ArticulatedObject
-from generation.utils import *
+from magic.data.generation.ArticulatedObjs import ArticulatedObject
+from magic.data.generation.mujocoDoubleCabinetParts import set_two_door_control
+from magic.data.generation.utils import *
 
-# TODO: how to sample geometry more realistically?
-# ie, what's the joint distribution over length, width, height
-def sample_refrigerator():
-    length = pyro.sample("length", dist.Uniform(24/2*0.0254, 33/2*0.0254)).item()
-    width =pyro.sample('width',  dist.Uniform(23/2*0.0254, 36/2*0.0254)).item()
-    height=pyro.sample('height', dist.Uniform(65/2*0.0254, 69/2*0.0254)).item()
-    thickness=pyro.sample('thicc', dist.Uniform(0.02 / 2, 0.05 / 2)).item()
-    mass=pyro.sample('mass', dist.Uniform(5.0, 30.0))
+dist_length = dist.Uniform(24/2*0.0254, 33/2*0.0254)
+dist_width = dist.Uniform(23/2*0.0254, 36/2*0.0254)
+dist_height = dist.Uniform(65/2*0.0254, 69/2*0.0254)
+dist_thickness = dist.Uniform(0.02 / 2, 0.05 / 2)
+dist_mass = dist.Uniform(5.0, 30.0)
+
+def sample_refrigerator(mean_flag):
+    if mean_flag:
+        length=dist_length.mean
+        width=dist_width.mean
+        height=dist_height.mean
+        thickness=dist_thickness.mean
+        mass=dist_mass.mean
+    else:
+        length = pyro.sample("length", dist_length).item()
+        width =pyro.sample('width', dist_width).item()
+        height=pyro.sample('height', dist_height).item()
+        thickness=pyro.sample('thicc', dist_thickness).item()
+        mass=pyro.sample('mass', dist_mass)
     left=True
     return length, width, height, thickness, left, mass
 
@@ -35,25 +49,13 @@ def build_refrigerator(length, width, height, thicc, left, set_pose=None, set_ro
     if set_pose is None:
         base_xyz, base_angle = sample_pose_fridge(base_length, base_width)
         base_quat = angle_to_quat(base_angle)
-        # print('base xyz', base_xyz)
-        # print('base angle', base_angle)
-        # print('base quat', base_quat)
-
-        # base_quat = sample_quat()
     else:
-        # # NOTE: BROKEN
-        base_xyz = set_pose
-        base_angle = set_rot
-        base_quat = angle_to_quat(base_angle)
-
-    # # FOR TESTING ############################
-    # base_xyz = (2.0, 0.0, 0.0)
-    # base_quat = (0.0, 0.0, 0.0, 1.0)
-    # ########################################################
+        base_xyz = tuple(set_pose)
+        base_quat = tuple(set_rot)
 
     # build the case
     base_origin=make_string(base_xyz)
-    base_orientation=make_quat_string(angle_to_quat(base_angle))
+    base_orientation=make_quat_string(base_quat)
 
     base_size = make_string((base_length, base_width, base_height))
     side_length=length
@@ -108,7 +110,7 @@ def build_refrigerator(length, width, height, thicc, left, set_pose=None, set_ro
     parameters = np.array([[param_axis1, param_radius1],[param_axis2, param_radius2] ]) # shape = 1, 2, 3, length = 6
 
     # construct the object
-    fridge = ArticulatedObject(4, geometry, parameters, '', base_xyz, base_quat)
+    fridge = ArticulatedObject(5, geometry, parameters, '', base_xyz, base_quat)
 
     # FOR TESTING. compute the axis poses
     ax = fridge.params[0][0]
@@ -140,6 +142,8 @@ def build_refrigerator(length, width, height, thicc, left, set_pose=None, set_ro
     <actuator>
         <velocity joint="bottom_left_hinge" name="viva_revolution" kv='10'></velocity>
         <velocity joint="bottom_right_hinge" name="viva" kv='10'></velocity>
+        <!--position joint="bottom_left_hinge" name="viva_positionL" kp='10'></position-->
+        <!--position joint="bottom_right_hinge" name="viva_positionR" kp='10'></position-->
     </actuator>
     <asset>
         <texture builtin="flat" name="tabletex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
@@ -202,6 +206,8 @@ def build_refrigerator(length, width, height, thicc, left, set_pose=None, set_ro
             </body>
         <body name="external_camera_body_0" pos="0.0 0 0.00">
             <camera euler="-1.57 1.57 0.0" fovy='''+fovy_str+''' name="external_camera_0" pos="0.0 0 0"></camera>
+            <inertial pos= " 0.00 0.0 0.000000 " mass="1" diaginertia="1 1 1" />
+            <joint name="cam_j" pos="0.0 0 0" axis = "1 0 0" type="free" />
         </body>
     </worldbody>
 </mujoco>'''
@@ -212,27 +218,25 @@ def test():
     import cv2
     from mujoco_py import load_model_from_xml, MjSim, MjViewer
     from mujoco_py.modder import TextureModder
-    l,w,h,t,left,m=sample_refrigerator()
-    fridge=build_refrigerator(l,w,h,t,left,
-                              set_pose = (3.0, 0.0, -1.0))
 
-    model = load_model_from_xml(fridge.xml)
-    sim = MjSim(model)
-    viewer = MjViewer(sim)
-    modder = TextureModder(sim)
 
-    t = 0
-    sim.data.ctrl[0] =  0.1
-    sim.data.ctrl[1] =  0.2
-    while t < 2000:
-        sim.step()
-        if t % 100 == 0:
-            img, depth = sim.render(256, 212, camera_name='external_camera_0', depth=True)
-            img=np.flip(img, axis=0)
-            cv2.imwrite('refrigerator' + str(t) +  '.png', img)
-        viewer.render()
-        t += 1
+    for i in range(100):
+        l,w,h,t,left,m=sample_refrigerator(False)
+        fridge=build_refrigerator(l,w,h,t,left,
+                                  set_pose = (3.0, 0.0, -1.0),
+                                  set_rot=(0,0,0,1))
+
+        model = load_model_from_xml(fridge.xml)
+        sim = MjSim(model)
+        viewer = MjViewer(sim)
+        modder = TextureModder(sim)
+        set_two_door_control(sim,'refrigerator')
+
+        t = 0
+        while t < 2000:
+            sim.step()
+            viewer.render()
+            t += 1
 
 if __name__ == "__main__":
-    # for i in range(200):
     test()

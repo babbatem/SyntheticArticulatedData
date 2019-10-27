@@ -4,7 +4,7 @@ import pyro.distributions as dist
 import torch
 import transforms3d as tf3d
 
-import generation.calibrations as calibrations
+import magic.data.generation.calibrations as calibrations
 
 def write_urdf(filename, xml):
 	header = '''<?xml version="1.0"?>
@@ -76,12 +76,9 @@ def get_cam_relative_params(obj):
 
 def get_cam_relative_params2(obj):
 	'''
-		Converts an object's axis coordinates from object-centric to ego-centric.
-		Note: might need to invert the rotation because of the setup?
+		Converts an object's axis coordinates from object frame to camera frame
 	'''
 	obj_position = obj.pose
-	# obj_angle = 3.1415926 - obj.rotation
-	# obj_axis = [0,0,1]
 
 	obj_rot_matrix = tf3d.quaternions.quat2mat(obj.rotation)
 	obj_transform = tf3d.affines.compose(obj_position, obj_rot_matrix, np.ones(3))
@@ -93,21 +90,6 @@ def get_cam_relative_params2(obj):
 	axis_in_world_frame = (np.matmul(obj_transform , axis_in_obj_frame))[:3]
 	ax_quat = obj.rotation # [w, qx, qy, qz]
 
-	# TODO: it appears as though all labels are vertical regardless of mechanism orientation
-	# if obj.type == 3:
-	# 	toasty_twist = tf3d.axangles.axangle2mat([1,0,0], 3.14)
-	# 	composition=  obj_rot_matrix * toasty_twist
-	# 	ax_quat = tf3d.quaternions.mat2quat(composition)
-
-	# print('axquat', ax_quat)
-	# print('xrot', toasty_twist)
-	# print('composition', composition)
-
-
-	# if obj.type == 3:
-	# 	# drawer - axis of translation is in x
-	# 	ax_quat = obj.rotation *
-
 	axis_and_quat = np.append(axis_in_world_frame, ax_quat)
 	axis_and_door = np.append(axis_and_quat, door)
 
@@ -115,12 +97,7 @@ def get_cam_relative_params2(obj):
 	return axis_and_door
 
 def transform_param(axis, door, obj):
-	'''
-		TODO: make axis a 7DoF thing...?
-	'''
 	obj_position = obj.pose
-	# obj_angle = 3.1415926 - obj.rotation
-	# obj_axis = [0,0,1]
 
 	obj_rot_matrix = tf3d.quaternions.quat2mat(obj.rotation)
 	obj_transform = tf3d.affines.compose(obj_position, obj_rot_matrix, np.ones(3))
@@ -134,38 +111,7 @@ def transform_param(axis, door, obj):
 		ax_quat = obj.rotation * tf3d.quaternions.axangle2quat([1,0,0], -1.57)
 
 	axis_and_quat = np.append(axis_in_world_frame, ax_quat)
-	# axis_and_door = np.append(axis_and_quat, door)
-
-	# assert len(axis_and_door) == 10
 	return axis_and_quat, door
-
-def bullet_cam_param_test(obj):
-	'''
-		Converts an object's axis coordinates from object-centric to ego-centric.
-		Note: might need to invert the rotation because of the setup?
-	'''
-	obj_position = obj.pose
-	# obj_angle = 3.1415926 - obj.rotation
-	# obj_axis = [0,0,1]
-
-	obj_rot_matrix = tf3d.quaternions.quat2mat(obj.rotation)
-	obj_transform = tf3d.affines.compose(obj_position, obj_rot_matrix, np.ones(3))
-
-	axis=obj.params[0]
-	door=obj.params[1]
-
-	axis_in_obj_frame = [axis[0], axis[1], axis[2], 1.0]
-	axis_in_world_frame = (np.matmul(obj_transform , axis_in_obj_frame))[:3]
-	ax_quat = obj.rotation # [w, qx, qy, qz]
-	theta, vector = tf3d.quaternions.quat2axangle(ax_quat)
-	# print(theta)
-	# print(vector)
-
-	axis_and_quat = np.append(axis_in_world_frame, ax_quat)
-	axis_and_door = np.append(axis_and_quat, door)
-
-	# assert len(axis_and_door) == 10
-	return axis_in_world_frame, theta
 
 def sample_quat():
 	rpy=pyro.sample('euler', dist.Uniform(torch.tensor([0.0,0.0,0.0]),torch.tensor([2*3.14, 2*3.14, 2*3.14]))).numpy()

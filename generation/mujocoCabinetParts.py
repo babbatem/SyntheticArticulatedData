@@ -1,19 +1,35 @@
 import numpy as np
 import pyro
 import pyro.distributions as dist
+import torch
+import transforms3d as tf3d
 
-from generation.ArticulatedObjs import ArticulatedObject
-from generation.utils import sample_quat, sample_pose, make_string, make_single_string, make_quat_string, get_cam_relative_params2, angle_to_quat, get_cam_params
+from magic.data.generation.ArticulatedObjs import ArticulatedObject
+from magic.data.generation.utils import sample_quat, sample_pose, make_string, make_single_string, make_quat_string, get_cam_relative_params2, angle_to_quat, get_cam_params
 
-def sample_cabinet():
-    length=pyro.sample("length", dist.Uniform(0.28,0.32)).item()
-    width =pyro.sample('width', dist.Uniform(0.3,0.7)).item()
-    height=pyro.sample('height', dist.Uniform(width,0.7)).item()
-    thickness=pyro.sample('thicc', dist.Uniform(0.03, 0.05)).item()
-    left=pyro.sample('lefty', dist.Bernoulli(0.5)).item()
-    mass=pyro.sample('mass', dist.Uniform(5.0, 30.0))
+d_len=dist.Uniform(0.28,0.32)
+d_width=dist.Uniform(0.3,0.7)
+d_height=dist.Uniform(0.5,0.7)
+d_thicc=dist.Uniform(0.03, 0.05)
+d_left=dist.Bernoulli(0.5)
+d_mass=dist.Uniform(5.0, 30.0)
+
+def sample_cabinet(mean_flag):
+    if mean_flag:
+        length=d_len.mean
+        width =d_width.mean
+        height=d_height.mean
+        thickness=d_thicc.mean
+        left=d_left.mean
+        mass=d_mass.mean
+    else:
+        length=pyro.sample("length", d_len).item()
+        width =pyro.sample('width', d_width).item()
+        height=pyro.sample('height', d_height).item()
+        thickness=pyro.sample('thicc', d_thicc).item()
+        left=pyro.sample('lefty', d_left).item()
+        mass=pyro.sample('mass', d_mass)
     return length / 2, width / 2, height / 2, thickness / 2, left, mass
-
 
 def sample_handle(length, width, height, left):
     HANDLE_LEN=pyro.sample('hl', dist.Uniform(0.01, 0.03)).item()
@@ -30,7 +46,7 @@ def sample_handle(length, width, height, left):
 
     return HX, HY, HZ, HANDLE_LEN, HANDLE_WIDTH, HANDLE_HEIGHT
 
-def build_cabinet(length, width, height, thicc, left, set_pose=None):
+def build_cabinet(length, width, height, thicc, left, set_pose=None, set_rot=None, mean=False):
 
     base_length=length
     base_width=width
@@ -39,23 +55,12 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None):
     if not set_pose:
         base_xyz, base_angle = sample_pose()
         base_quat = angle_to_quat(base_angle)
-        # print('base xyz', base_xyz)
-        # print('base angle', base_angle)
-        # print('base quat', base_quat)
-
-        # base_quat = sample_quat()
     else:
-        # # NOTE: BROKEN
-        base_xyz = set_pose
-        base_angle = 7 * 3.14 / 8
-        base_quat = angle_to_quat(base_angle)
+        base_xyz = tuple(set_pose)
+        base_quat = tuple(set_rot)
 
-    # base_quat = angle_to_quat(base_angle)
     base_origin=make_string(base_xyz)
-    base_orientation=make_quat_string(angle_to_quat(base_angle))
-
-    # print(base_xyz)
-    # print(base_angle)
+    base_orientation=make_quat_string(base_quat)
 
     base_size = make_string((base_length, base_width, base_height))
     side_length=length
@@ -78,8 +83,6 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None):
         params = [[base_length, -base_width, side_height], [0.0, base_width, 0.0]]
         hinge_range=' "-2.3 0" '
     else:
-
-        # TODO: update this to match implementation for left...ie origins are different...
         door_origin=make_string((0.0, -base_width, 0.0))
         hinge_origin=make_string((base_length, base_width, side_height))
         params = [[base_length, base_width, side_height], [0.0, -base_width, 0.0]]
@@ -99,7 +102,6 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None):
 
     # FOR TESTING
     post_params = get_cam_relative_params2(cab)
-    # print(post_params)
     axis=post_params[:3]
     axquat=post_params[3:7]
     ax_string = make_string(tuple(axis))
@@ -118,6 +120,7 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None):
     <size njmax="500" nconmax="100" />
     <actuator>
         <velocity joint="bottom_left_hinge" name="viva_revolution" kv='10'></velocity>
+        <!--position joint="bottom_left_hinge" name="viva_position" kp='10'></position-->
     </actuator>
     <asset>
         <texture builtin="flat" name="tabletex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
@@ -164,6 +167,8 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None):
             </body>
         <body name="external_camera_body_0" pos="0.0 0 0.00">
             <camera euler="-1.57 1.57 0.0" fovy='''+fovy_str+''' name="external_camera_0" pos="0.0 0 0"></camera>
+            <inertial pos= " 0.00 0.0 0.000000 " mass="1" diaginertia="1 1 1" />
+            <joint name="cam_j" pos="0.0 0 0" axis = "1 0 0" type="free" />
         </body>
     </worldbody>
 </mujoco>'''

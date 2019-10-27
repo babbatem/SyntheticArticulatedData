@@ -1,32 +1,38 @@
 import numpy as np
 import pyro
 import pyro.distributions as dist
+import torch
 
-from generation.ArticulatedObjs import Drawer, ArticulatedObject
-from generation.utils import *
+from magic.data.generation.ArticulatedObjs import Drawer, ArticulatedObject
+from magic.data.generation.utils import *
+
+d_len = dist.Uniform(18/2*0.0254, 24/2*0.0254)
+d_width = dist.Uniform(12/2*0.0254, 30/2*0.0254)
+d_height = dist.Uniform(4/2*0.0254, 12/2*0.0254)
+d_thicc = dist.Uniform(0.01 / 2, 0.05 / 2)
 
 def get_fake_pose():
     base_xyz = [3.0,0.0,0.0]
     base_angle= 0.0
     return tuple(base_xyz), base_angle
 
-def sample_drawers():
-    length=pyro.sample("length", dist.Uniform(18/2*0.0254, 24/2*0.0254)).item() #aka depth
-    width =pyro.sample('width',  dist.Uniform(12/2*0.0254, 30/2*0.0254)).item()
-    height=pyro.sample('height', dist.Uniform(4/2*0.0254, 12/2*0.0254)).item()
-    thickness=pyro.sample('thicc', dist.Uniform(0.01 / 2, 0.05 / 2)).item()
-
-    # OLD PARAMETER SAMPLING THAT WAS ARBTIRARY >:(
-    # length=pyro.sample("length", dist.Uniform(0.3 / 2,0.7 / 2)).item()
-    # width= pyro.sample('width', dist.Uniform(0.3/ 2,0.7/ 2)).item()
-    # height=pyro.sample('height', dist.Uniform(0.3/ 2,0.4/ 2)).item()
-    # thickness=pyro.sample('thicc', dist.Uniform(0.03 / 2, 0.05 / 2)).item()
-    # # left=pyro.sample('lefty', dist.Bernoulli(0.5)).item()
+def sample_drawers(mean_flag):
+    if mean_flag:
+        print('generating mean drawer')
+        length = d_len.mean
+        width = d_width.mean
+        height = d_height.mean
+        thickness=d_thicc.mean
+    else:
+        length=pyro.sample("length", d_len).item() #aka depth
+        width =pyro.sample('width', d_width).item()
+        height=pyro.sample('height', d_height).item()
+        thickness=pyro.sample('thicc', d_thicc).item()
     left=0
     mass=5.0
     return length, width, height, thickness, left, mass
 
-def build_drawer(length, width, height, thicc, left, set_pose=None):
+def build_drawer(length, width, height, thicc, left, set_pose=None, set_rot=None):
     base_length=length
     base_width=width
     base_height=thicc
@@ -34,29 +40,13 @@ def build_drawer(length, width, height, thicc, left, set_pose=None):
     if set_pose is None:
         base_xyz, base_angle = sample_pose_drawer()
         base_quat = angle_to_quat(base_angle)
-        # print('base xyz', base_xyz)
-        # print('base angle', base_angle)
-        # print('base quat', base_quat)
-
-        # base_quat = sample_quat()
     else:
-        # # NOTE: BROKEN
-        base_xyz = set_pose
-        base_angle = 7 * 3.14 / 8
-        base_quat = angle_to_quat(base_angle)
+        base_xyz = tuple(set_pose)
+        base_quat = tuple(set_rot)
 
-    # base_xyz, base_angle = sample_pose()
-    # base_quat = angle_to_quat(base_angle)
-    # base_quat = sample_quat()
-    # print(base_xyz)
-    # print(base_angle)
 
     base_origin=make_string(base_xyz)
     base_orientation = make_quat_string(base_quat)
-    # base_orientation=make_quat_string(angle_to_quat(base_angle))
-
-    # print(base_xyz)
-    # print(base_angle)
 
     base_size = make_string((base_length, base_width, base_height))
     side_length=length
@@ -146,6 +136,7 @@ def build_drawer(length, width, height, thicc, left, set_pose=None):
         <size njmax="500" nconmax="100" />
         <actuator>
             <velocity joint="drawerJ" name="viva_revolution" kv='10'></velocity>
+            <!--position joint="drawerJ" name="viva_position" kp='10'></position-->
         </actuator>
         <asset>
             <texture builtin="flat" name="objtex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
@@ -154,9 +145,6 @@ def build_drawer(length, width, height, thicc, left, set_pose=None):
             <material name="geomHandle" shininess="0.03" specular="0.75" texture="handletex"></material>
         </asset>
         <worldbody>
-            <body name="external_camera_body_0" pos="0.0 0 0.00">
-                <camera euler="-1.57 1.57 0.0" fovy='''+fovy_str+''' name="external_camera_0" pos="0.0 0 0"></camera>
-            </body>
             <body name="cabinet_bottom" pos=''' + base_origin + ''' quat='''+base_orientation+'''>
                 <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
                 <geom size='''+ base_size +''' type="box" material="geomObj" name="b"/>
@@ -202,6 +190,11 @@ def build_drawer(length, width, height, thicc, left, set_pose=None):
                     </body>
                 </body>
             </body>
+            <body name="external_camera_body_0" pos="0.0 0 0.00">
+                <camera euler="-1.57 1.57 0.0" fovy='''+fovy_str+''' name="external_camera_0" pos="0.0 0 0"></camera>
+                <inertial pos= " 0.00 0.0 0.000000 " mass="1" diaginertia="1 1 1" />
+                <joint name="cam_j" pos="0.0 0 0" axis = "1 0 0" type="free" />
+            </body>
             <!--body name="TESTING" pos='''+ax_string+''' quat='''+ax_quat_string+'''>
                 <geom size="0.05" type="sphere" />
             </body-->
@@ -211,7 +204,7 @@ def build_drawer(length, width, height, thicc, left, set_pose=None):
     return obj
 
 def test():
-
+    # import transforms3d as tf3d
     from mujoco_py import load_model_from_xml, MjSim, MjViewer
     from mujoco_py.modder import TextureModder
 

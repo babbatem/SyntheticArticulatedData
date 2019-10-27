@@ -1,20 +1,33 @@
 import numpy as np
 import pyro
 import pyro.distributions as dist
+import torch
+import transforms3d as tf3d
 
-from generation.ArticulatedObjs import ArticulatedObject
-from generation.utils import sample_quat, sample_pose, make_string, make_single_string, make_quat_string, get_cam_relative_params2, angle_to_quat, get_cam_params, transform_param
+from magic.data.generation.ArticulatedObjs import ArticulatedObject
+from magic.data.generation.utils import sample_quat, sample_pose, make_string, make_single_string, make_quat_string, get_cam_relative_params2, angle_to_quat, get_cam_params, transform_param
 
-def sample_cabinet2():
-    length=pyro.sample("length", dist.Uniform(0.28,0.32)).item()
-    width =pyro.sample('width', dist.Uniform(0.3,0.7)).item()
-    height=pyro.sample('height', dist.Uniform(width,0.7)).item()
-    thickness=pyro.sample('thicc', dist.Uniform(0.03, 0.05)).item()
-    # left=pyro.sample('lefty', dist.Bernoulli(0.5)).item()
+d_len = dist.Uniform(0.28,0.32)
+d_width = dist.Uniform(0.3,0.7)
+d_height = dist.Uniform(0.5,0.7)
+d_thicc = dist.Uniform(0.03, 0.05)
+d_mass = dist.Uniform(5.0, 30.0)
+
+def sample_cabinet2(mean_flag):
+    if mean_flag:
+        length=d_len.mean
+        width=d_width.mean
+        height=d_height.mean
+        thickness=d_thicc.mean
+        mass=d_mass.mean
+    else:
+        length=pyro.sample("length", d_len).item()
+        width =pyro.sample('width', d_width).item()
+        height=pyro.sample('height', d_height).item()
+        thickness=pyro.sample('thicc', d_thicc).item()
+        mass=pyro.sample('mass', d_mass)
     left = True
-    mass=pyro.sample('mass', dist.Uniform(5.0, 30.0))
     return length / 2, width / 2, height / 2, thickness / 2, left, mass
-
 
 def sample_handle(length, width, height, left):
     HANDLE_LEN=pyro.sample('hl', dist.Uniform(0.01, 0.03)).item()
@@ -31,7 +44,7 @@ def sample_handle(length, width, height, left):
 
     return HX, HY, HZ, HANDLE_LEN, HANDLE_WIDTH, HANDLE_HEIGHT
 
-def build_cabinet2(length, width, height, thicc, left, set_pose=None):
+def build_cabinet2(length, width, height, thicc, left, set_pose=None, set_rot=None):
 
     base_length=length
     base_width=width
@@ -40,25 +53,12 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None):
     if not set_pose:
         base_xyz, base_angle = sample_pose()
         base_quat = angle_to_quat(base_angle)
-        # print('base xyz', base_xyz)
-        # print('base angle', base_angle)
-        # print('base quat', base_quat)
-
-        # base_quat = sample_quat()
     else:
-        # # NOTE: BROKEN
-        base_xyz = set_pose
-        base_angle = 7 * 3.14 / 8
-        base_quat = angle_to_quat(base_angle)
+        base_xyz = tuple(set_pose)
+        base_quat = tuple(set_rot)
 
-    # base_xyz, base_angle = sample_pose()
-    # print(base_xyz)
-    # base_quat = angle_to_quat(base_angle)
     base_origin=make_string(base_xyz)
-    base_orientation=make_quat_string(angle_to_quat(base_angle))
-
-    # print(base_xyz)
-    # print(base_angle)
+    base_orientation=make_quat_string(base_quat)
 
     base_size = make_string((base_length, base_width, base_height))
     side_length=length
@@ -111,9 +111,6 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None):
     axis=post_params[:3]
     axquat=post_params[3:7]
 
-    # print(cab.rotation)
-    # print(axquat)
-
     ax_x_string = make_string(tuple(axis))
     axquat_string = make_quat_string(axquat)
 
@@ -136,6 +133,8 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None):
     <actuator>
         <velocity joint="bottom_left_hinge" name="viva_revolution" kv='10'></velocity>
         <velocity joint="bottom_right_hinge" name="viva" kv='10'></velocity>
+        <!--position joint="bottom_left_hinge" name="viva_positionL" kp='10'></position-->
+        <!--position joint="bottom_right_hinge" name="viva_positionR" kp='10'></position-->
     </actuator>
     <asset>
         <texture builtin="flat" name="tabletex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
@@ -196,6 +195,8 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None):
             </body>
         <body name="external_camera_body_0" pos="0.0 0 0.00">
             <camera euler="-1.57 1.57 0.0" fovy='''+fovy_str+''' name="external_camera_0" pos="0.0 0 0"></camera>
+            <inertial pos= " 0.00 0.0 0.000000 " mass="1" diaginertia="1 1 1" />
+            <joint name="cam_j" pos="0.0 0 0" axis = "1 0 0" type="free" />
         </body>
     </worldbody>
 </mujoco>'''
@@ -206,7 +207,7 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None):
     cab.xml=xml
     return cab
 
-def set_two_door_control(sim):
+def set_two_door_control(sim, obj):
     max_vel = 0.3
     mode = np.random.choice([0,1,2,3])
     open_right = np.random.binomial(1,0.75)
@@ -223,15 +224,15 @@ def set_two_door_control(sim):
         if open_right:
             if open_left:
                 sim.data.ctrl[1] = max_vel * right_mult / maxxx
-                sim.data.ctrl[0] = -max_vel * left_mult / maxxx
+                sim.data.ctrl[0] = -max_vel * left_mult / maxxx if obj=='cabinet2' else max_vel * left_mult / maxxx
             else:
                 sim.data.ctrl[1] = max_vel
         else:
-            sim.data.ctrl[0] = -max_vel
+            sim.data.ctrl[0] = -max_vel if obj=='cabinet2' else max_vel
 
     elif mode == 1:
         # start with left open
-        sim.data.ctrl[0] = -2.0
+        sim.data.ctrl[0] = -2.0 if obj=='cabinet2' else 2.0
         for i in range(1000):
             sim.step()
             # viewer.render()
@@ -239,11 +240,11 @@ def set_two_door_control(sim):
         if open_right:
             if open_left:
                 sim.data.ctrl[1] = max_vel * right_mult / maxxx
-                sim.data.ctrl[0] = max_vel * left_mult / maxxx
+                sim.data.ctrl[0] = max_vel * left_mult / maxxx if obj=='cabinet2' else -max_vel * left_mult / maxxx
             else:
                 sim.data.ctrl[1] = max_vel
         else:
-            sim.data.ctrl[0] = max_vel
+            sim.data.ctrl[0] = max_vel if obj=='cabinet2' else -max_vel
 
     elif mode == 2:
         sim.data.ctrl[1] = 2.0
@@ -253,18 +254,18 @@ def set_two_door_control(sim):
         if open_right:
             if open_left:
                 sim.data.ctrl[1] = -max_vel * right_mult / maxxx
-                sim.data.ctrl[0] = -max_vel * left_mult / maxxx
+                sim.data.ctrl[0] = -max_vel * left_mult / maxxx if obj=='cabinet2' else max_vel * left_mult / maxxx
             else:
                 sim.data.ctrl[1] = -max_vel
         else:
-            sim.data.ctrl[0] = -max_vel
+            sim.data.ctrl[0] = -max_vel if obj=='cabinet2' else max_vel
 
 
 
     else:
         # start with both open
         sim.data.ctrl[1] = 2.0
-        sim.data.ctrl[0] = -2.0
+        sim.data.ctrl[0] = -2.0 if obj=='cabinet2' else 2.0
         for i in range(1000):
             sim.step()
             # viewer.render()
@@ -272,11 +273,11 @@ def set_two_door_control(sim):
         if open_right:
             if open_left:
                 sim.data.ctrl[1] = -max_vel * right_mult / maxxx
-                sim.data.ctrl[0] = max_vel * left_mult / maxxx
+                sim.data.ctrl[0] = max_vel * left_mult / maxxx if obj=='cabinet2' else -max_vel * left_mult / maxxx
             else:
                 sim.data.ctrl[1] = -max_vel
         else:
-            sim.data.ctrl[0] = max_vel
+            sim.data.ctrl[0] = max_vel if obj=='cabinet2' else -max_vel
 
 
 def test(k=0):

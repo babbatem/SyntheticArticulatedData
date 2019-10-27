@@ -31,6 +31,11 @@ color_fy = color_cam_matrix[1,1]
 color_cx = color_cam_matrix[0,2]
 color_cy = color_cam_matrix[1,2]
 
+color_fx
+color_fy
+color_fov_x
+color_fov_y
+
 # %% IR Field of View, Width, Height computation
 ir_width = 512
 ir_height = 424
@@ -42,7 +47,7 @@ ir_fy = ir_cam_matrix[1,1]
 ir_cx = ir_cam_matrix[0,2]
 ir_cy = ir_cam_matrix[1,2]
 
-## transform into camera frame!! useful for reconstruction!
+## transform into camera frame. useful for reconstruction!
 T_magic_to_cam = np.array([ [0. ,-1. , 0. , 0. ],
                             [0. , 0. ,-1. , 0. ],
                             [1. , 0. , 0. , 0. ],
@@ -54,6 +59,8 @@ znear = 0.1
 zfar = 12
 sim_width = 192
 sim_height = 108
+# sim_width = 720 * 4
+# sim_height = 405 * 4
 
 old_sim_fovy = 60 * math.pi / 180
 old_sim_fovx = 2 * math.atan(math.tan(old_sim_fovy / 2) * sim_width / sim_height)
@@ -79,6 +86,9 @@ sim_proj_matrix = np.array([[sim_focal_x, 0, sim_width / 2],
 color_fov_x = 360 / math.pi * math.atan2(color_width, 2 * color_cam_matrix[0,0])
 color_fov_y = 360 / math.pi * math.atan2(color_height, 2 * color_cam_matrix[1,1] )
 
+color_fov_x
+color_fov_y
+
 test_sim_fov_y =  360 / math.pi * math.atan2(sim_height, 2 * sim_proj_matrix[1,1] )
 test_sim_fov_x =  360 / math.pi * math.atan2(sim_width, 2 * sim_proj_matrix[0,0] )
 
@@ -94,4 +104,5 @@ if __name__ == '__main__':
     print(' \n simulated cam matrix: \n\t', str(np.round(fake_proj_matrix,0)).replace('\n', '\n\t'))
     print(' \n real cam matrix: \n\t', str(np.round(color_cam_matrix,0)).replace('\n', '\n\t'))
     print(' \n ')
+
     print(color_fov_y)
