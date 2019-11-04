@@ -14,14 +14,14 @@ import transforms3d as tf3d
 from mujoco_py import load_model_from_path, MjSim, MjViewer
 from mujoco_py.modder import TextureModder
 
-from magic.data.generation.mujocoCabinetParts import build_cabinet, sample_cabinet
-from magic.data.generation.mujocoDrawerParts import build_drawer, sample_drawers
-from magic.data.generation.mujocoMicrowaveParts import build_microwave, sample_microwave
-from magic.data.generation.mujocoToasterOvenParts import build_toaster, sample_toaster
-from magic.data.generation.mujocoDoubleCabinetParts import build_cabinet2, sample_cabinet2, set_two_door_control
-from magic.data.generation.mujocoRefrigeratorParts import build_refrigerator, sample_refrigerator
-from magic.data.generation.utils import *
-import magic.data.generation.calibrations as calibrations
+from generation.mujocoCabinetParts import build_cabinet, sample_cabinet
+from generation.mujocoDrawerParts import build_drawer, sample_drawers
+from generation.mujocoMicrowaveParts import build_microwave, sample_microwave
+from generation.mujocoToasterOvenParts import build_toaster, sample_toaster
+from generation.mujocoDoubleCabinetParts import build_cabinet2, sample_cabinet2, set_two_door_control
+from generation.mujocoRefrigeratorParts import build_refrigerator, sample_refrigerator
+from generation.utils import *
+import generation.calibrations as calibrations
 
 def white_bg(img):
     mask = 1 - (img > 0)

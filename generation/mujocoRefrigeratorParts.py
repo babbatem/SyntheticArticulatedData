@@ -4,9 +4,9 @@ import pyro.distributions as dist
 import torch
 import transforms3d as tf3d
 
-from magic.data.generation.ArticulatedObjs import ArticulatedObject
-from magic.data.generation.mujocoDoubleCabinetParts import set_two_door_control
-from magic.data.generation.utils import *
+from generation.ArticulatedObjs import ArticulatedObject
+from generation.mujocoDoubleCabinetParts import set_two_door_control
+from generation.utils import *
 
 dist_length = dist.Uniform(24/2*0.0254, 33/2*0.0254)
 dist_width = dist.Uniform(23/2*0.0254, 36/2*0.0254)

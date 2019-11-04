@@ -3,8 +3,8 @@ import pyro
 import pyro.distributions as dist
 import torch
 
-from magic.data.generation.ArticulatedObjs import Drawer, ArticulatedObject
-from magic.data.generation.utils import *
+from generation.ArticulatedObjs import Drawer, ArticulatedObject
+from generation.utils import *
 
 d_len = dist.Uniform(18/2*0.0254, 24/2*0.0254)
 d_width = dist.Uniform(12/2*0.0254, 30/2*0.0254)

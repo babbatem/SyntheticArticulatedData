@@ -4,7 +4,7 @@ import pyro.distributions as dist
 import torch
 import transforms3d as tf3d
 
-import magic.data.generation.calibrations as calibrations
+import generation.calibrations as calibrations
 
 def write_urdf(filename, xml):
 	header = '''<?xml version="1.0"?>

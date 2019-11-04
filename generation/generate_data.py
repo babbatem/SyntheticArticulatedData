@@ -2,8 +2,8 @@ import os
 import time
 import argparse
 
-from magic.data.generation.generator import SceneGenerator
-from magic.data.generation.inspect_data import make_animations
+from generation.generator import SceneGenerator
+from generation.inspect_data import make_animations
 
 def main(args):
 

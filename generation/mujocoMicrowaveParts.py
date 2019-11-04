@@ -4,8 +4,8 @@ import pyro.distributions as dist
 import torch
 import transforms3d as tf3d
 
-from magic.data.generation.ArticulatedObjs import Microwave, ArticulatedObject
-from magic.data.generation.utils import sample_quat, sample_pose, make_string, make_single_string, make_quat_string, get_cam_relative_params2, angle_to_quat, get_cam_params
+from generation.ArticulatedObjs import Microwave, ArticulatedObject
+from generation.utils import sample_quat, sample_pose, make_string, make_single_string, make_quat_string, get_cam_relative_params2, angle_to_quat, get_cam_params
 
 d_len=dist.Uniform(10/2*0.0154, 22/2*0.0154)
 d_width=dist.Uniform(16/2*0.0154, 30/2*0.0154)
