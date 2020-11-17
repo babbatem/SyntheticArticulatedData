@@ -170,19 +170,15 @@ class SceneGenerator():
                 fname=os.path.join(self.savedir, 'scene'+str(i).zfill(6)+'.xml')
                 self.write_urdf(fname, xml)
                 self.scenes.append(fname)
-                self.take_images(fname, obj, writ)
+                #self.take_images(fname, obj, writ)
         return
 
+    '''
     def take_images(self, filename, obj, writer, img_idx=0, debug=False):
-        #model = load_model_from_path(filename)
-        #sim = MjSim(model)
-        #modder= TextureModder(sim)
+        model = load_model_from_path(filename)
+        sim = MjSim(model)
+        modder= TextureModder(sim)
         # viewer=MjViewer(sim) # this fucking line has caused me so much pain.
-        p.connect(p.GUI)
-        import os
-        import pybullet as p
-        import time
-        import pybullet_data
 
         embedding = np.append(obj.type, obj.geom.reshape(-1))
         if obj.type == 4 or obj.type == 5:
@@ -257,7 +253,7 @@ class SceneGenerator():
                 self.img_idx += 1
 
             t += 1
-
+    '''
 
 # shapes and stuff
 # if 1DoF, params is length 10. If 2DoF, params is length 20.

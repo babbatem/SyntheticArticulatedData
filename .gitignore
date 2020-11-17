@@ -1,5 +1,5 @@
 # Python artifacts
-**/__pycache__/
+__pycache__/
 
 # Generated MJCF files, RGB images, and depth images
 generated_mjcf/
