@@ -187,7 +187,7 @@ def build_refrigerator(length, width, height, thicc, left, set_pose=None, set_ro
                 </body>
                 <body name="fridgeinet_left_hinge" pos='''+hinge1_origin+'''>
                     <inertial pos='''+door1_origin+''' mass="1" diaginertia="1 1 1" />
-                    <joint name="bottom_left_hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge1_range+''' />
+                    <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge1_range+''' />
                     <geom size='''+door_size1+''' pos='''+door1_origin+''' type="box" material="geomObj" name="g"/>
                     <body name="handle_link" pos='''+handle1_origin+'''>
                         <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
@@ -196,7 +196,7 @@ def build_refrigerator(length, width, height, thicc, left, set_pose=None, set_ro
                 </body>
                 <body name="fridgeinet_right_hinge" pos='''+hinge2_origin+'''>
                     <inertial pos='''+door2_origin+''' mass="1" diaginertia="1 1 1" />
-                    <joint name="bottom_right_hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge2_range+''' />
+                    <joint name="bottom_right_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge2_range+''' />
                     <geom size='''+door_size2+''' pos='''+door2_origin+''' type="box" material="geomObj" name="q"/>
                     <body name="handle2_link" pos='''+handle2_origin+'''>
                         <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />

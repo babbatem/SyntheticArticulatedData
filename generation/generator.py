@@ -11,8 +11,8 @@ import numpy as np
 from tqdm import tqdm
 import transforms3d as tf3d
 
-from mujoco_py import load_model_from_path, MjSim, MjViewer
-from mujoco_py.modder import TextureModder
+#from mujoco_py import load_model_from_path, MjSim, MjViewer
+#from mujoco_py.modder import TextureModder
 
 from generation.mujocoCabinetParts import build_cabinet, sample_cabinet
 from generation.mujocoDrawerParts import build_drawer, sample_drawers
@@ -174,10 +174,15 @@ class SceneGenerator():
         return
 
     def take_images(self, filename, obj, writer, img_idx=0, debug=False):
-        model = load_model_from_path(filename)
-        sim = MjSim(model)
-        modder= TextureModder(sim)
+        #model = load_model_from_path(filename)
+        #sim = MjSim(model)
+        #modder= TextureModder(sim)
         # viewer=MjViewer(sim) # this fucking line has caused me so much pain.
+        p.connect(p.GUI)
+        import os
+        import pybullet as p
+        import time
+        import pybullet_data
 
         embedding = np.append(obj.type, obj.geom.reshape(-1))
         if obj.type == 4 or obj.type == 5:

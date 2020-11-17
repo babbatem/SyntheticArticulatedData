@@ -14,7 +14,7 @@ d_thicc=dist.Uniform(0.03, 0.05)
 d_left=dist.Bernoulli(0.5)
 d_mass=dist.Uniform(5.0, 30.0)
 
-def sample_cabinet(mean_flag):
+def sample_cabinet(mean_flag=False):
     if mean_flag:
         length=d_len.mean
         width =d_width.mean
@@ -157,7 +157,7 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None, set_rot=Non
                 </body>
                 <body name="cabinet_left_hinge" pos='''+hinge_origin+'''>
                     <inertial pos='''+door_origin+''' mass="1" diaginertia="1 1 1" />
-                    <joint name="bottom_left_hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge_range+''' />
+                    <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge_range+''' />
                     <geom size='''+door_size+''' pos='''+door_origin+''' type="box" material="geomObj" name="g"/>
                     <body name="handle_link" pos='''+handle_origin+'''>
                         <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
@@ -180,32 +180,36 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None, set_rot=Non
     return cab
 
 def test():
-    from mujoco_py import load_model_from_xml, MjSim, MjViewer
-    from mujoco_py.modder import TextureModder
+    #from mujoco_py import load_model_from_xml, MjSim, MjViewer
+    #from mujoco_py.modder import TextureModder
     l,w,h,t,left,m=sample_cabinet()
     cab=build_cabinet(l,w,h,t,left)
+    filename = 'test.urdf'
+    with open(filename, "w") as text_file:
+        text_file.write(cab.xml)
+
     # print(cab.xml)
-    model = load_model_from_xml(cab.xml)
-    sim = MjSim(model)
-    viewer = MjViewer(sim)
-    modder = TextureModder(sim)
-    for name in sim.model.geom_names:
-        modder.rand_all(name)
+    #model = load_model_from_xml(cab.xml)
+    #sim = MjSim(model)
+    #viewer = MjViewer(sim)
+    #modder = TextureModder(sim)
+    #for name in sim.model.geom_names:
+    #    modder.rand_all(name)
 
-    t = 0
-    if cab.geom[3] == 1:
-        sim.data.ctrl[0] = -0.2
-    else:
-        sim.data.ctrl[0] = 0.2
+    #t = 0
+    #if cab.geom[3] == 1:
+    #    sim.data.ctrl[0] = -0.2
+    #else:
+    #    sim.data.ctrl[0] = 0.2
 
-    while t < 1000:
+    #while t < 1000:
         # for name in sim.model.geom_names:
         #     modder.rand_all(name)
-        sim.step()
-        viewer.render()
-        t += 1
+    #    sim.step()
+    #    viewer.render()
+    #    t += 1
 
 if __name__ == '__main__':
-    for i in range(200):
-        test()
+    #for i in range(200):
+    test()
 # test()
