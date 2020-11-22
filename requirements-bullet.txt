@@ -1,0 +1,7 @@
+numpy
+matplotlib
+pyro-ppl
+torch
+opencv-python
+tqdm
+pybullet
