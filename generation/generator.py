@@ -11,8 +11,8 @@ import numpy as np
 from tqdm import tqdm
 import transforms3d as tf3d
 
-#from mujoco_py import load_model_from_path, MjSim, MjViewer
-#from mujoco_py.modder import TextureModder
+from mujoco_py import load_model_from_path, MjSim, MjViewer
+from mujoco_py.modder import TextureModder
 
 from generation.mujocoCabinetParts import build_cabinet, sample_cabinet
 from generation.mujocoDrawerParts import build_drawer, sample_drawers
@@ -170,10 +170,9 @@ class SceneGenerator():
                 fname=os.path.join(self.savedir, 'scene'+str(i).zfill(6)+'.xml')
                 self.write_urdf(fname, xml)
                 self.scenes.append(fname)
-                #self.take_images(fname, obj, writ)
+                self.take_images(fname, obj, writ)
         return
 
-    '''
     def take_images(self, filename, obj, writer, img_idx=0, debug=False):
         model = load_model_from_path(filename)
         sim = MjSim(model)
@@ -253,7 +252,6 @@ class SceneGenerator():
                 self.img_idx += 1
 
             t += 1
-    '''
 
 # shapes and stuff
 # if 1DoF, params is length 10. If 2DoF, params is length 20.

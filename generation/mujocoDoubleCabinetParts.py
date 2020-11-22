@@ -100,6 +100,8 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None, set_rot=No
 
     parameters = np.array([[param_axis1, param_radius1],[param_axis2, param_radius2] ]) # shape = 1, 2, 3, length = 6
     cab = ArticulatedObject(4, geometry, parameters, '', base_xyz, base_quat)
+    
+    cab.control = [0, 0, 0, 0, -2.3, 0, 0, 2.3, 0, 0]
 
     # FOR TESTING
     ax = cab.params[0][0]

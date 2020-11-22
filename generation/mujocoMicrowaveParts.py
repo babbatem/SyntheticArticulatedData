@@ -93,6 +93,8 @@ def build_microwave(length, width, height, thicc, left, set_pose=None, set_rot=N
     znear, zfar, fovy = get_cam_params()
     cab = ArticulatedObject(0, geometry, parameters, '', base_xyz, base_quat)
 
+    cab.control = [0,0,0,0,0,-2,0,0]
+
     znear_str= make_single_string(znear)
     zfar_str = make_single_string(zfar)
     fovy_str = make_single_string(fovy)

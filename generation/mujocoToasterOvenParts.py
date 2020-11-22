@@ -91,6 +91,8 @@ def build_toaster(length, width, height, thicc, left, set_pose=None, set_rot=Non
 
     cab = ArticulatedObject(3, geometry, parameters, '', base_xyz, base_quat)
 
+    cab.control = [2,2,2,2,2,2,2,2,2]
+
     znear_str= make_single_string(znear)
     zfar_str = make_single_string(zfar)
     fovy_str = make_single_string(fovy)

@@ -100,6 +100,8 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None, set_rot=Non
     parameters = np.array(params) # shape = 1, 2, 3, length = 6
     cab = ArticulatedObject(2, geometry, parameters, '', base_xyz, base_quat)
 
+    cab.control = [0,0,0,0, -2 if left else 2, 0, 0]
+
     # FOR TESTING
     post_params = get_cam_relative_params2(cab)
     axis=post_params[:3]
@@ -180,8 +182,8 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None, set_rot=Non
     return cab
 
 def test():
-    #from mujoco_py import load_model_from_xml, MjSim, MjViewer
-    #from mujoco_py.modder import TextureModder
+    from mujoco_py import load_model_from_xml, MjSim, MjViewer
+    from mujoco_py.modder import TextureModder
     l,w,h,t,left,m=sample_cabinet()
     cab=build_cabinet(l,w,h,t,left)
     filename = 'test.urdf'
@@ -189,27 +191,27 @@ def test():
         text_file.write(cab.xml)
 
     # print(cab.xml)
-    #model = load_model_from_xml(cab.xml)
-    #sim = MjSim(model)
-    #viewer = MjViewer(sim)
-    #modder = TextureModder(sim)
-    #for name in sim.model.geom_names:
-    #    modder.rand_all(name)
+    model = load_model_from_xml(cab.xml)
+    sim = MjSim(model)
+    viewer = MjViewer(sim)
+    modder = TextureModder(sim)
+    for name in sim.model.geom_names:
+        modder.rand_all(name)
 
-    #t = 0
-    #if cab.geom[3] == 1:
-    #    sim.data.ctrl[0] = -0.2
-    #else:
-    #    sim.data.ctrl[0] = 0.2
+    t = 0
+    if cab.geom[3] == 1:
+        sim.data.ctrl[0] = -0.2
+    else:
+        sim.data.ctrl[0] = 0.2
 
-    #while t < 1000:
+    while t < 1000:
         # for name in sim.model.geom_names:
         #     modder.rand_all(name)
-    #    sim.step()
-    #    viewer.render()
-    #    t += 1
+        sim.step()
+        viewer.render()
+        t += 1
 
 if __name__ == '__main__':
-    #for i in range(200):
-    test()
+    for i in range(200):
+        test()
 # test()
