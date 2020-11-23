@@ -106,7 +106,11 @@ def build_drawer(length, width, height, thicc, left, set_pose=None, set_rot=None
     znear, zfar, fovy = get_cam_params()
     obj = ArticulatedObject(1, geometry, params, '', base_xyz, base_quat)
 
+    # FOR PY-BULLET
     obj.control = [0,0,0,0,1.5 * length,0,0,0,0,0,0]
+    obj.joint_index = 4
+    obj.name = 'drawer'
+    obj.joint_type = 'prismatic'
 
     znear_str= make_single_string(znear)
     zfar_str = make_single_string(zfar)

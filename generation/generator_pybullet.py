@@ -12,7 +12,7 @@ import numpy as np
 from tqdm import tqdm
 import transforms3d as tf3d
 
-import pybullet as p
+import pybullet as pb
 
 from generation.mujocoCabinetParts import build_cabinet, sample_cabinet
 from generation.mujocoDrawerParts import build_drawer, sample_drawers
@@ -23,8 +23,8 @@ from generation.mujocoRefrigeratorParts import build_refrigerator, sample_refrig
 from generation.utils import *
 import generation.calibrations as calibrations
 
-p.connect(p.GUI)
-p.setGravity(0,0,-100)
+pb.connect(pb.GUI)
+pb.setGravity(0,0,-100)
 
 def white_bg(img):
     mask = 1 - (img > 0)
@@ -56,14 +56,14 @@ class SceneGenerator():
         self.debugging=debug_flag
 
         # Camera external settings
-        self.viewMatrix = p.computeViewMatrix(
+        self.viewMatrix = pb.computeViewMatrix(
             cameraEyePosition=[4,0,1],
             cameraTargetPosition=[0,0,1],
             cameraUpVector=[0,0,1]
         )
 
         # Camera internal settings
-        self.projectionMatrix = p.computeProjectionMatrixFOV(
+        self.projectionMatrix = pb.computeProjectionMatrixFOV(
             fov=45.,
             aspect=1.0,
             nearVal=0.1,
@@ -197,46 +197,47 @@ class SceneGenerator():
         return obj, camera_dist, camera_height
 
     def generate_scenes(self, N, objtype, write_csv=True, save_imgs=True, mean_flag=False, left_only=False, cute_flag=False):
-        fname=os.path.join(self.savedir, 'params.csv')
+        fname=os.path.join(self.savedir, 'labels.csv')
         self.img_idx = 0
         with open(fname, 'a') as csvfile:
             writ = csv.writer(csvfile, delimiter=',')
+            writ.writerow(['Object Name', 'Joint Type', 'Joint Index', 'p_1', 'p_2', 'p_3', 'l_1', 'l_2', 'l_3'])
             for i in tqdm(range(N)):
                 obj, camera_dist, camera_height = self.sample_obj(objtype, mean_flag, left_only, cute_flag=cute_flag)
                 xml=obj.xml
                 fname=os.path.join(self.savedir, 'scene'+str(i).zfill(6)+'.xml')
                 self.write_urdf(fname, xml)
                 self.scenes.append(fname)
-                self.take_images(fname, obj, camera_dist, camera_height, writ)
+                self.take_images(fname, obj, camera_dist, camera_height, obj.joint_index, writ)
         return
 
-    def take_images(self, filename, obj, camera_dist, camera_height, writer, img_idx=0, debug=False):
-        objId, _ = p.loadMJCF(filename)
+    def take_images(self, filename, obj, camera_dist, camera_height, joint_index, writer, img_idx=0, debug=False):
+        objId, _ = pb.loadMJCF(filename)
 
-        self.viewMatrix = p.computeViewMatrix(
-            cameraEyePosition=[camera_dist,0,3*camera_height],
+        self.viewMatrix = pb.computeViewMatrix(
+            cameraEyePosition=[camera_dist,0,1],
             cameraTargetPosition=[0,0,camera_height],
-            cameraUpVector=[1,0,1]
+            cameraUpVector=[-1,0,1]
         )
         
         # Take 16 pictures, permuting orientation and joint extension
         for t in range(1,4000):
-            p.stepSimulation()
+            pb.stepSimulation()
 
             if t%250==0:
                 # Randomly update orientation to new orientation between -pi/4 and pi/4
                 startPos = [0,0,0]
                 rotation = np.random.uniform(-np.pi/4.,np.pi/4.)
-                startOrientation = p.getQuaternionFromEuler([0,0,rotation])
-                p.resetBasePositionAndOrientation(objId, startPos, startOrientation)
+                startOrientation = pb.getQuaternionFromEuler([0,0,rotation])
+                pb.resetBasePositionAndOrientation(objId, startPos, startOrientation)
                 
                 # Update joint extension randomly between 0 and 120
-                for j in range(p.getNumJoints(objId)):
+                for j in range(pb.getNumJoints(objId)):
                     if obj.control[j] < 0:
                         rotation = np.random.uniform(obj.control[j], 0)
                     else: 
                         rotation = np.random.uniform(0, obj.control[j])
-                    p.resetJointState(objId, j, rotation)
+                    pb.resetJointState(objId, j, rotation)
 
                 #########################
                 IMG_WIDTH = calibrations.sim_width
@@ -244,7 +245,7 @@ class SceneGenerator():
                 #########################
 
                 # Take picture
-                width, height, img, depth, segImg = p.getCameraImage(
+                width, height, img, depth, segImg = pb.getCameraImage(
                     IMG_WIDTH, # width
                     IMG_HEIGHT, # height
                     self.viewMatrix,
@@ -253,7 +254,7 @@ class SceneGenerator():
                     shadow=1, # include shadows
                 )
                 
-                depth = vertical_flip(depth)
+                #depth = vertical_flip(depth)
                 real_depth = buffer_to_real(depth, 12.0, 0.1)
                 norm_depth = real_depth / 12.0
 
@@ -277,9 +278,17 @@ class SceneGenerator():
                 # if IMG_WIDTH != 192 or IMG_HEIGHT != 108:
                 #     depth = cv2.resize(norm_depth, (192,108))
 
+                if joint_index is None:
+                    raise Exception("Joint index not defined! Are you simulated a 2DOF object? (Don't do that yet)")
+
+                large_door_joint_info = pb.getJointInfo(objId, joint_index)
+                p = np.array(list(large_door_joint_info[14]))
+                l = np.array(list(large_door_joint_info[13]))
+                m = np.cross(large_door_joint_info[14], large_door_joint_info[13])
+
                 depthfname = os.path.join(self.savedir,'depth'+str(self.img_idx).zfill(6) + '.pt')
                 torch.save(torch.tensor(norm_depth.copy()), depthfname)
-                row = np.array([img_idx, rotation]) # SAVE SCREW REPRESENTATION HERE 
+                row = np.concatenate((np.array([obj.name, obj.joint_type, self.img_idx]),p,l)) # SAVE SCREW REPRESENTATION HERE 
                 # print(row.shape)
                 writer.writerow(row)
                 self.img_idx += 1

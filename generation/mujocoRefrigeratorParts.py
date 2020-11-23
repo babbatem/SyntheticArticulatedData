@@ -112,6 +112,7 @@ def build_refrigerator(length, width, height, thicc, left, set_pose=None, set_ro
     # construct the object
     fridge = ArticulatedObject(5, geometry, parameters, '', base_xyz, base_quat)
 
+    # FOR PY-BULLET
     fridge.control = [2,2,2,2,2,2,2,2,2,2,2]
 
     # FOR TESTING. compute the axis poses

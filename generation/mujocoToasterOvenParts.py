@@ -91,7 +91,11 @@ def build_toaster(length, width, height, thicc, left, set_pose=None, set_rot=Non
 
     cab = ArticulatedObject(3, geometry, parameters, '', base_xyz, base_quat)
 
+    # FOR PY-BULLET
     cab.control = [2,2,2,2,2,2,2,2,2]
+    cab.joint_index = 5
+    cab.name = 'toaster'
+    cab.joint_type = 'revolute'
 
     znear_str= make_single_string(znear)
     zfar_str = make_single_string(zfar)

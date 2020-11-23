@@ -100,7 +100,11 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None, set_rot=Non
     parameters = np.array(params) # shape = 1, 2, 3, length = 6
     cab = ArticulatedObject(2, geometry, parameters, '', base_xyz, base_quat)
 
+    # FOR PY-BULLET
     cab.control = [0,0,0,0, -2 if left else 2, 0, 0]
+    cab.joint_index = 4
+    cab.name = 'cabinet'
+    cab.joint_type = 'revolute'
 
     # FOR TESTING
     post_params = get_cam_relative_params2(cab)
