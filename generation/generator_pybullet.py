@@ -201,7 +201,7 @@ class SceneGenerator():
         self.img_idx = 0
         with open(fname, 'a') as csvfile:
             writ = csv.writer(csvfile, delimiter=',')
-            writ.writerow(['Object Name', 'Joint Type', 'Joint Index', 'p_1', 'p_2', 'p_3', 'l_1', 'l_2', 'l_3'])
+            writ.writerow(['Object Name', 'Joint Type', 'Image Index', 'p_1', 'p_2', 'p_3', 'l_1', 'l_2', 'l_3'])
             for i in tqdm(range(N)):
                 obj, camera_dist, camera_height = self.sample_obj(objtype, mean_flag, left_only, cute_flag=cute_flag)
                 xml=obj.xml
