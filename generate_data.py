@@ -40,7 +40,7 @@ def main(args):
 	scenegen.generate_scenes(int(args.n / 5), args.obj)
 
 	# generate visualization for sanity
-	if args.debug:
+	if not args.py_bullet and args.debug:
 		make_animations(os.path.join(args.dir,args.obj), min(100, args.n * 16), use_color=args.debug)
 
 
