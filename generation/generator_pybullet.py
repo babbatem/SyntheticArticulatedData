@@ -201,7 +201,7 @@ class SceneGenerator():
         self.img_idx = 0
         with open(fname, 'a') as csvfile:
             writ = csv.writer(csvfile, delimiter=',')
-            writ.writerow(['Object Name', 'Joint Type', 'Image Index', 'p_1', 'p_2', 'p_3', 'l_1', 'l_2', 'l_3'])
+            writ.writerow(['Object Name', 'Joint Type', 'Image Index', 'l_1', 'l_2', 'l_3', 'm_1', 'm_2', 'm_3'])
             for i in tqdm(range(N)):
                 obj, camera_dist, camera_height = self.sample_obj(objtype, mean_flag, left_only, cute_flag=cute_flag)
                 xml=obj.xml
@@ -279,7 +279,7 @@ class SceneGenerator():
                 #     depth = cv2.resize(norm_depth, (192,108))
 
                 if joint_index is None:
-                    raise Exception("Joint index not defined! Are you simulated a 2DOF object? (Don't do that yet)")
+                    raise Exception("Joint index not defined! Are you simulating a 2DOF object? (Don't do that yet)")
 
                 large_door_joint_info = pb.getJointInfo(objId, joint_index)
                 p = np.array(list(large_door_joint_info[14]))
@@ -288,7 +288,6 @@ class SceneGenerator():
 
                 depthfname = os.path.join(self.savedir,'depth'+str(self.img_idx).zfill(6) + '.pt')
                 torch.save(torch.tensor(norm_depth.copy()), depthfname)
-                row = np.concatenate((np.array([obj.name, obj.joint_type, self.img_idx]),p,l)) # SAVE SCREW REPRESENTATION HERE 
-                # print(row.shape)
+                row = np.concatenate((np.array([obj.name, obj.joint_type, self.img_idx]),l, m)) # SAVE SCREW REPRESENTATION HERE 
                 writer.writerow(row)
                 self.img_idx += 1
