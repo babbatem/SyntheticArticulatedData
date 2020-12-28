@@ -159,7 +159,7 @@ class SceneGenerator():
             raise 'uh oh, object not implemented!'
         return obj
 
-    def generate_scenes(self, N, objtype, write_csv=True, save_imgs=True, mean_flag=False, left_only=False, cute_flag=False):
+    def generate_scenes(self, N, objtype, write_csv=True, save_imgs=True, mean_flag=False, left_only=False, cute_flag=False, test=False, video=False):
         fname=os.path.join(self.savedir, 'params.csv')
         self.img_idx = 0
         with open(fname, 'a') as csvfile:

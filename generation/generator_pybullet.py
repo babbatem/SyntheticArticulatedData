@@ -3,6 +3,7 @@ import os
 import csv
 import copy
 import math
+import pickle
 
 import cv2
 import pyro
@@ -196,22 +197,22 @@ class SceneGenerator():
             raise 'uh oh, object not implemented!'
         return obj, camera_dist, camera_height
 
-    def generate_scenes(self, N, objtype, write_csv=True, save_imgs=True, mean_flag=False, left_only=False, cute_flag=False):
+    def generate_scenes(self, N, objtype, write_csv=True, save_imgs=True, mean_flag=False, left_only=False, cute_flag=False, test=False, video=False):
         fname=os.path.join(self.savedir, 'labels.csv')
         self.img_idx = 0
         with open(fname, 'a') as csvfile:
             writ = csv.writer(csvfile, delimiter=',')
-            writ.writerow(['Object Name', 'Joint Type', 'Image Index', 'l_1', 'l_2', 'l_3', 'm_1', 'm_2', 'm_3'])
+            writ.writerow(['Object Name', 'Joint Type', 'Image Index', 'l_1', 'l_2', 'l_3', 'm_1', 'm_2', 'm_3',])
             for i in tqdm(range(N)):
                 obj, camera_dist, camera_height = self.sample_obj(objtype, mean_flag, left_only, cute_flag=cute_flag)
                 xml=obj.xml
                 fname=os.path.join(self.savedir, 'scene'+str(i).zfill(6)+'.xml')
                 self.write_urdf(fname, xml)
                 self.scenes.append(fname)
-                self.take_images(fname, obj, camera_dist, camera_height, obj.joint_index, writ)
+                self.take_images(fname, obj, camera_dist, camera_height, obj.joint_index, writ, test=test, video=video)
         return
 
-    def take_images(self, filename, obj, camera_dist, camera_height, joint_index, writer, img_idx=0, debug=False):
+    def take_images(self, filename, obj, camera_dist, camera_height, joint_index, writer, img_idx=0, debug=False, test=False, video=False):
         objId, _ = pb.loadMJCF(filename)
 
         self.viewMatrix = pb.computeViewMatrix(
@@ -225,10 +226,13 @@ class SceneGenerator():
             pb.stepSimulation()
 
             if t%250==0:
+                state = {'startPos': [0,0,0], 'eulerOrientation': [], 'joints': [], 'joint_index': joint_index, 'img_idx': self.img_idx}
+
                 # Randomly update orientation to new orientation between -pi/4 and pi/4
                 startPos = [0,0,0]
-                rotation = np.random.uniform(-np.pi/4.,np.pi/4.)
-                startOrientation = pb.getQuaternionFromEuler([0,0,rotation])
+                obj_rotation = np.random.uniform(-np.pi/4.,np.pi/4.)
+                startOrientation = pb.getQuaternionFromEuler([0,0,obj_rotation])
+                state['eulerOrientation'] = [0,0,obj_rotation]
                 pb.resetBasePositionAndOrientation(objId, startPos, startOrientation)
                 
                 # Update joint extension randomly between 0 and 120
@@ -237,6 +241,7 @@ class SceneGenerator():
                         rotation = np.random.uniform(obj.control[j], 0)
                     else: 
                         rotation = np.random.uniform(0, obj.control[j])
+                    state['joints'].append(rotation)
                     pb.resetJointState(objId, j, rotation)
 
                 #########################
@@ -253,6 +258,19 @@ class SceneGenerator():
                     lightDirection=[camera_dist, 0, camera_height+1], # light source
                     shadow=1, # include shadows
                 )
+
+                if test:
+                    state['viewMatrix'] = self.viewMatrix
+                    state['projectionMatrix'] = self.projectionMatrix
+                    state['lightDirection'] = [camera_dist, 0, camera_height+1]
+                    state['height'] = IMG_HEIGHT 
+                    state['width'] = IMG_WIDTH 
+                    state['mjcf'] = filename
+
+                    config_name = os.path.join(self.savedir,'config'+str(self.img_idx).zfill(6)+'.pkl')
+                    f = open(config_name,"wb")
+                    pickle.dump(state,f)
+                    f.close()
                 
                 #depth = vertical_flip(depth)
                 real_depth = buffer_to_real(depth, 12.0, 0.1)
@@ -290,4 +308,37 @@ class SceneGenerator():
                 torch.save(torch.tensor(norm_depth.copy()), depthfname)
                 row = np.concatenate((np.array([obj.name, obj.joint_type, self.img_idx]),l, m)) # SAVE SCREW REPRESENTATION HERE 
                 writer.writerow(row)
+
+                if video:
+                    increments = {j: 0 for j in range(pb.getNumJoints(objId))}
+                    videoFolderFname = os.path.join(self.savedir, 'video_for_img_'+str(self.img_idx).zfill(6))
+                    os.makedirs(videoFolderFname, exist_ok=False)
+                    for frame_idx in range(90):
+                        for j in range(pb.getNumJoints(objId)):
+                            pb.resetJointState(objId, j, increments[j])
+                            increments[j] += obj.control[j]/90
+                        
+                        _, _, rgbFrame, depthFrame, _ = pb.getCameraImage(
+                            IMG_WIDTH, # width
+                            IMG_HEIGHT, # height
+                            self.viewMatrix,
+                            self.projectionMatrix, 
+                            lightDirection=[camera_dist, 0, camera_height+1], # light source
+                            shadow=1, # include shadows
+                        )
+
+                        frameRgbFname = os.path.join(videoFolderFname, 'rgb_frame_'+str(frame_idx).zfill(6)+'.png')
+                        rgbFrame = white_bg(rgbFrame)
+                        cv2.imwrite(frameRgbFname, rgbFrame)
+                        frameDepthFname = os.path.join(videoFolderFname, 'depth_frame_'+str(frame_idx).zfill(6)+'.pt')
+                        real_depth = buffer_to_real(depthFrame, 12.0, 0.1)
+                        norm_depth = real_depth / 12.0
+
+                        if self.masked:
+                            # remove background
+                            mask = norm_depth > 0.99
+                            norm_depth = (1-mask)*norm_depth
+
+                        torch.save(torch.tensor(norm_depth.copy()), frameDepthFname)
+
                 self.img_idx += 1
