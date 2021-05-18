@@ -14,6 +14,7 @@ from tqdm import tqdm
 import transforms3d as tf3d
 
 import pybullet as pb
+import random
 
 from generation.mujocoCabinetParts import build_cabinet, sample_cabinet
 from generation.mujocoDrawerParts import build_drawer, sample_drawers
@@ -24,7 +25,7 @@ from generation.mujocoRefrigeratorParts import build_refrigerator, sample_refrig
 from generation.utils import *
 import generation.calibrations as calibrations
 
-pb.connect(pb.GUI)
+pb_client = pb.connect(pb.GUI)
 pb.setGravity(0,0,-100)
 
 def white_bg(img):
@@ -212,8 +213,44 @@ class SceneGenerator():
                 self.take_images(fname, obj, camera_dist, camera_height, obj.joint_index, writ, test=test, video=video)
         return
 
+    def create_plane_mesh(resx=3, resy=3):
+        verts = np.stack(
+            np.meshgrid(np.linspace(-0.5, 0.5, resx),
+                        np.linspace(-0.5, 0.5, resy))).reshape(2, -1).T
+        verts = np.concatenate([verts, np.zeros((len(verts), 1))], -1)
+        tris = []
+        for i in range(resx - 1):
+            for j in range(resy - 1):
+                ii = i + resx * j
+                tris += [ii, ii + 1, ii + resx]
+                tris += [ii + resx, ii + 1, ii + resx + 1]
+        uvs = np.stack(
+            np.meshgrid(np.linspace(0, 1, resx),
+                        np.linspace(0, 1, resy))).reshape(2, -1).T
+        normals = np.repeat([[0, 0, 1.0]], len(verts), 0)
+        return verts, tris, uvs, normals
+
+
     def take_images(self, filename, obj, camera_dist, camera_height, joint_index, writer, img_idx=0, debug=False, test=False, video=False):
+        
         objId, _ = pb.loadMJCF(filename)
+
+        # create texture image
+        x, y = np.meshgrid(np.linspace(-1,1, 128), np.linspace(-1,1, 128))
+        texture_img = (72*(np.stack([np.cos(16*x), np.cos(16*y), np.cos(16*(x+y))])+2)).astype(np.uint8).transpose(1,2,0)
+        from PIL import Image
+        texture_img = Image.fromarray(texture_img)
+        fname = 'texture_test.png'
+        texture_img.save(fname)
+
+
+        # apply texture to the object 
+        textureId = pb.loadTexture(fname, physicsClientId=pb_client)
+        pb.changeVisualShape(objId, -1, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #bottom 
+        # pb.changeVisualShape(objId, 0, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #left side
+        # pb.changeVisualShape(objId, 1, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #right side
+
+        # pb.changeVisualShape(objId, -1, rgbaColor=[168 / 255.0, 164 / 255.0, 92 / 255.0, 1.0], specularColor=[0.5, 0.5, 0.5]) 
 
         self.viewMatrix = pb.computeViewMatrix(
             cameraEyePosition=[camera_dist,0,1],
@@ -286,6 +323,7 @@ class SceneGenerator():
                     # img = cv2.resize(img, (IMG_WIDTH,IMG_HEIGHT))
 
                     #img = vertical_flip(img)
+
                     img = white_bg(img)
                     imgfname = os.path.join(self.savedir, 'img'+str(self.img_idx).zfill(6)+'.png')
                     depth_imgfname = os.path.join(self.savedir, 'depth_img'+str(self.img_idx).zfill(6)+'.png')

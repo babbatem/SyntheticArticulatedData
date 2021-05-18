@@ -25,35 +25,35 @@
         <material name="bg" shininess="0.03" specular="0.75" texture="wallpaper"></material>
     </asset>
     <worldbody>
-            <!--body name="obj_x_axis" pos= " 1.236579 0.072557 0.400667 "  quat= " 0.153259 0.000000 0.000000 0.988186" >
+            <!--body name="obj_x_axis" pos= " 1.332277 0.404847 0.348494 "  quat= " 0.170005 0.000000 0.000000 0.985443" >
                     <geom size="0.1 0.1 0.1" type="box" material="geomHandle" name="who cares"/>
             </body-->
-            <body name="cabinet_bottom" pos= " 1.461505 0.261336 0.128004 "  quat= " 0.153259 0.000000 0.000000 0.988186" >
+            <body name="cabinet_bottom" pos= " 1.421116 0.178165 0.071663 "  quat= " 0.170005 0.000000 0.000000 0.985443" >
                 <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                <geom size= " 0.157179 0.248040 0.016941 "  type="box" material="geomObj" name="b"/>
-                <body name="cabinet_left" pos= " 0.000000 -0.231099 0.272664 " >
+                <geom size= " 0.159656 0.183812 0.016009 "  type="box" material="geomObj" name="b"/>
+                <body name="cabinet_left" pos= " 0.000000 -0.167803 0.276831 " >
                     <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                    <geom size= " 0.157179 0.016941 0.272664 "  type="box" material="geomObj" name="c" />
+                    <geom size= " 0.159656 0.016009 0.276831 "  type="box" material="geomObj" name="c" />
                 </body>
-                <body name="cabinet_right" pos= " 0.000000 0.231099 0.272664 " >
+                <body name="cabinet_right" pos= " 0.000000 0.167803 0.276831 " >
                     <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                    <geom size= " 0.157179 0.016941 0.272664 "  type="box" material="geomObj" name="d" />
+                    <geom size= " 0.159656 0.016009 0.276831 "  type="box" material="geomObj" name="d" />
                 </body>
-                <body name="cabinet_top" pos= " 0.000000 0.000000 0.545327 " >
+                <body name="cabinet_top" pos= " 0.000000 0.000000 0.553663 " >
                     <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                    <geom size= " 0.157179 0.248040 0.016941 "  type="box" material="geomObj" name="e"/>
+                    <geom size= " 0.159656 0.183812 0.016009 "  type="box" material="geomObj" name="e"/>
                 </body>
-                <body name="cabinet_back" pos= " -0.140238 0.000000 0.272664 "  >
+                <body name="cabinet_back" pos= " -0.143647 0.000000 0.276831 "  >
                     <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                    <geom size= " 0.016941 0.248040 0.272664 "  type="box" material="geomObj" name="f" />
+                    <geom size= " 0.016009 0.183812 0.276831 "  type="box" material="geomObj" name="f" />
                 </body>
-                <body name="cabinet_left_hinge" pos= " 0.157179 0.248040 0.272664 " >
-                    <inertial pos= " 0.000000 -0.248040 0.000000 "  mass="1" diaginertia="1 1 1" />
-                    <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range= "0 2.3"  />
-                    <geom size= " 0.016941 0.248040 0.272664 "  pos= " 0.000000 -0.248040 0.000000 "  type="box" material="geomObj" name="g"/>
-                    <body name="handle_link" pos= " 0.039295 -0.455428 0.141029 " >
+                <body name="cabinet_left_hinge" pos= " 0.159656 -0.183812 0.276831 " >
+                    <inertial pos= " 0.000000 0.183812 0.000000 "  mass="1" diaginertia="1 1 1" />
+                    <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range= "-2.3 0"  />
+                    <geom size= " 0.016009 0.183812 0.276831 "  pos= " 0.000000 0.183812 0.000000 "  type="box" material="geomObj" name="g"/>
+                    <body name="handle_link" pos= " 0.039914 0.337255 0.127445 " >
                         <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                        <geom size= " 0.029433 0.016973 0.112253 "  type="box" material="geomHandle" name="h"/>
+                        <geom size= " 0.020776 0.015003 0.112693 "  type="box" material="geomHandle" name="h"/>
                     </body>
                 </body>
             </body>
