@@ -15,6 +15,7 @@ import transforms3d as tf3d
 
 import pybullet as pb
 import random
+from PIL import Image
 
 from generation.mujocoCabinetParts import build_cabinet, sample_cabinet
 from generation.mujocoDrawerParts import build_drawer, sample_drawers
@@ -218,14 +219,23 @@ class SceneGenerator():
         
         objId, _ = pb.loadMJCF(filename)
 
-        # create texture image
+        # create normal texture image
         x, y = np.meshgrid(np.linspace(-1,1, 128), np.linspace(-1,1, 128))
         texture_img = (72*(np.stack([np.cos(16*x), np.cos(16*y), np.cos(16*(x+y))])+2)).astype(np.uint8).transpose(1,2,0)
-        from PIL import Image
         texture_img = Image.fromarray(texture_img)
-        fname = 'texture_test.png'
+        fname = 'normal_texture.png'
         texture_img.save(fname)
         textureId = pb.loadTexture(fname, physicsClientId=pb_client)
+
+        # create gaussian texture image
+        SHAPE = (150,200)
+        noise = np.random.normal(255./1,255./3,SHAPE)
+        image_noise = Image.fromarray(noise)
+        image_noise = image_noise.convert('RGB')
+        fname2 = "gaussian_noise.png"
+        image_noise.save(fname2)
+        textureId2 = pb.loadTexture(fname2, physicsClientId=pb_client)
+
 
         # apply texture to the object way: idea one
         # planeVis = pb.createVisualShape(shapeType=pb.GEOM_MESH,
@@ -242,9 +252,10 @@ class SceneGenerator():
         #                     physicsClientId=pb_client)
 
         # apply texture to the object way: idea two
-        # pb.changeVisualShape(objId, -1, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #bottom 
-        # pb.changeVisualShape(objId, 0, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #left side
-        # pb.changeVisualShape(objId, 1, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #right side
+        # pb.changeVisualShape(objId, -1, textureUniqueId=textureId2, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #bottom 
+        pb.changeVisualShape(objId, 0, textureUniqueId=textureId2, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #left side
+        pb.changeVisualShape(objId, 1, textureUniqueId=textureId2, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #right side
+        pb.changeVisualShape(objId, 2, textureUniqueId=textureId2, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #top
 
         # change visual shape without the texture add
         # pb.changeVisualShape(objId, -1, rgbaColor=[168 / 255.0, 164 / 255.0, 92 / 255.0, 1.0], specularColor=[0.5, 0.5, 0.5]) 
@@ -284,35 +295,39 @@ class SceneGenerator():
                 #########################
 
                 # # Take picture without texture
-                # width, height, img, depth, segImg = pb.getCameraImage(
-                #     IMG_WIDTH, # width
-                #     IMG_HEIGHT, # height
-                #     self.viewMatrix,
-                #     self.projectionMatrix, 
-                #     lightDirection=[camera_dist, 0, camera_height+1], # light source
-                #     shadow=1, # include shadows
-                # )
+                width, height, img, depth, segImg = pb.getCameraImage(
+                    IMG_WIDTH, # width
+                    IMG_HEIGHT, # height
+                    self.viewMatrix,
+                    self.projectionMatrix, 
+                    lightDirection=[camera_dist, 0, camera_height+1], # light source
+                    shadow=1, # include shadows
+                )
 
                 # use projective texture, it's more robust, applies texture on all sides at once
-                viewMat = [
-                    0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
-                    0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
-                    0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
-                ]
-                projMat = [
-                    0.7499999403953552, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0,
-                    0.0, 0.0, -0.02000020071864128, 0.0
-                ]
+                # viewMat = [
+                #     0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
+                #     0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
+                #     0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
+                # ]
+                # projMat = [
+                #     0.7499999403953552, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0,
+                #     0.0, 0.0, -0.02000020071864128, 0.0
+                # ]
+
+                # cam = pb.getDebugVisualizerCamera()
+                # viewMat = cam[2]
+                # projMat = cam[3]
                 
-                width, height, img, depth, segImg = pb.getCameraImage(
-                                        IMG_WIDTH, # width
-                                        IMG_HEIGHT, # height
-                                        self.viewMatrix,
-                                        self.projectionMatrix,
-                                        renderer=pb.ER_BULLET_HARDWARE_OPENGL,
-                                        flags=pb.ER_USE_PROJECTIVE_TEXTURE,
-                                        projectiveTextureView=viewMat,
-                                        projectiveTextureProj=projMat)
+                # width, height, img, depth, segImg = pb.getCameraImage(
+                #                         IMG_WIDTH, # width
+                #                         IMG_HEIGHT, # height
+                #                         self.viewMatrix,
+                #                         self.projectionMatrix,
+                #                         renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                #                         flags=pb.ER_USE_PROJECTIVE_TEXTURE,
+                #                         projectiveTextureView=viewMat,
+                #                         projectiveTextureProj=projMat)
 
 
                 if test:
