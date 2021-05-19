@@ -213,23 +213,6 @@ class SceneGenerator():
                 self.take_images(fname, obj, camera_dist, camera_height, obj.joint_index, writ, test=test, video=video)
         return
 
-    def create_plane_mesh(resx=3, resy=3):
-        verts = np.stack(
-            np.meshgrid(np.linspace(-0.5, 0.5, resx),
-                        np.linspace(-0.5, 0.5, resy))).reshape(2, -1).T
-        verts = np.concatenate([verts, np.zeros((len(verts), 1))], -1)
-        tris = []
-        for i in range(resx - 1):
-            for j in range(resy - 1):
-                ii = i + resx * j
-                tris += [ii, ii + 1, ii + resx]
-                tris += [ii + resx, ii + 1, ii + resx + 1]
-        uvs = np.stack(
-            np.meshgrid(np.linspace(0, 1, resx),
-                        np.linspace(0, 1, resy))).reshape(2, -1).T
-        normals = np.repeat([[0, 0, 1.0]], len(verts), 0)
-        return verts, tris, uvs, normals
-
 
     def take_images(self, filename, obj, camera_dist, camera_height, joint_index, writer, img_idx=0, debug=False, test=False, video=False):
         
@@ -242,14 +225,28 @@ class SceneGenerator():
         texture_img = Image.fromarray(texture_img)
         fname = 'texture_test.png'
         texture_img.save(fname)
-
-
-        # apply texture to the object 
         textureId = pb.loadTexture(fname, physicsClientId=pb_client)
-        pb.changeVisualShape(objId, -1, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #bottom 
+
+        # apply texture to the object way: idea one
+        # planeVis = pb.createVisualShape(shapeType=pb.GEOM_MESH,
+        #                        fileName=filename,
+        #                        rgbaColor=[168 / 255.0, 164 / 255.0, 92 / 255.0, 1.0], 
+        #                        specularColor=[0.5, 0.5, 0.5],
+        #                        physicsClientId=pb_client)
+
+        # pb.changeVisualShape(planeVis,
+        #                     -1,
+        #                     textureUniqueId=textureId,
+        #                     rgbaColor=[1, 1, 1, 1],
+        #                     specularColor=[1, 1, 1, 1],
+        #                     physicsClientId=pb_client)
+
+        # apply texture to the object way: idea two
+        # pb.changeVisualShape(objId, -1, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #bottom 
         # pb.changeVisualShape(objId, 0, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #left side
         # pb.changeVisualShape(objId, 1, textureUniqueId=textureId, rgbaColor=[1, 1, 1, 1], specularColor=[1, 1, 1, 1], physicsClientId=pb_client) #right side
 
+        # change visual shape without the texture add
         # pb.changeVisualShape(objId, -1, rgbaColor=[168 / 255.0, 164 / 255.0, 92 / 255.0, 1.0], specularColor=[0.5, 0.5, 0.5]) 
 
         self.viewMatrix = pb.computeViewMatrix(
@@ -286,15 +283,37 @@ class SceneGenerator():
                 IMG_HEIGHT = calibrations.sim_height
                 #########################
 
-                # Take picture
+                # # Take picture without texture
+                # width, height, img, depth, segImg = pb.getCameraImage(
+                #     IMG_WIDTH, # width
+                #     IMG_HEIGHT, # height
+                #     self.viewMatrix,
+                #     self.projectionMatrix, 
+                #     lightDirection=[camera_dist, 0, camera_height+1], # light source
+                #     shadow=1, # include shadows
+                # )
+
+                # use projective texture, it's more robust, applies texture on all sides at once
+                viewMat = [
+                    0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
+                    0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
+                    0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
+                ]
+                projMat = [
+                    0.7499999403953552, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0,
+                    0.0, 0.0, -0.02000020071864128, 0.0
+                ]
+                
                 width, height, img, depth, segImg = pb.getCameraImage(
-                    IMG_WIDTH, # width
-                    IMG_HEIGHT, # height
-                    self.viewMatrix,
-                    self.projectionMatrix, 
-                    lightDirection=[camera_dist, 0, camera_height+1], # light source
-                    shadow=1, # include shadows
-                )
+                                        IMG_WIDTH, # width
+                                        IMG_HEIGHT, # height
+                                        self.viewMatrix,
+                                        self.projectionMatrix,
+                                        renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                                        flags=pb.ER_USE_PROJECTIVE_TEXTURE,
+                                        projectiveTextureView=viewMat,
+                                        projectiveTextureProj=projMat)
+
 
                 if test:
                     state['viewMatrix'] = self.viewMatrix

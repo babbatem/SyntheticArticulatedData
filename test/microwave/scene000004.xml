@@ -29,36 +29,36 @@
         <material name="geomKeypad" shininess="0.03" specular="0.75" texture="kp"></material>
     </asset>
     <worldbody>
-        <body name="cabinet_bottom" pos= " 1.449319 -0.451303 -0.277470 "  quat= " 0.271585 0.000000 0.000000 0.962415" >
+        <body name="cabinet_bottom" pos= " 1.009985 -0.159531 -0.499846 "  quat= " -0.070440 0.000000 0.000000 0.997516" >
             <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-            <geom size= " 0.090399 0.158343 0.005555 "  type="box" material="geomObj" name="b"/>
-            <body name="cabinet_left" pos= " 0.000000 -0.152788 0.097079 " >
+            <geom size= " 0.151424 0.158899 0.005216 "  type="box" material="geomObj" name="b"/>
+            <body name="cabinet_left" pos= " 0.000000 -0.153682 0.106679 " >
                 <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                <geom size= " 0.090399 0.005555 0.097079 "  type="box" material="geomObj" name="c" />
+                <geom size= " 0.151424 0.005216 0.106679 "  type="box" material="geomObj" name="c" />
             </body>
-            <body name="cabinet_right" pos= " 0.000000 0.152788 0.097079 " >
+            <body name="cabinet_right" pos= " 0.000000 0.153682 0.106679 " >
                 <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                <geom size= " 0.090399 0.005555 0.097079 "  type="box" material="geomObj" name="d" />
+                <geom size= " 0.151424 0.005216 0.106679 "  type="box" material="geomObj" name="d" />
             </body>
-            <body name="cabinet_top" pos= " 0.000000 0.000000 0.194158 " >
+            <body name="cabinet_top" pos= " 0.000000 0.000000 0.213358 " >
                 <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                <geom size= " 0.090399 0.158343 0.005555 "  type="box" material="geomObj" name="e"/>
+                <geom size= " 0.151424 0.158899 0.005216 "  type="box" material="geomObj" name="e"/>
             </body>
-            <body name="cabinet_back" pos= " -0.084844 0.000000 0.097079 "  >
+            <body name="cabinet_back" pos= " -0.146208 0.000000 0.106679 "  >
                 <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                <geom size= " 0.005555 0.158343 0.097079 "  type="box" material="geomObj" name="f" />
+                <geom size= " 0.005216 0.158899 0.106679 "  type="box" material="geomObj" name="f" />
             </body>
-            <body name="cabinet_keypad" pos= " 0.005555 0.117757 0.097079 " >
+            <body name="cabinet_keypad" pos= " 0.005216 0.118174 0.106679 " >
                 <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                <geom size= " 0.084844 0.039586 0.091524 "  type="box" material="geomKeypad" name="keypizzlemynizzle" />
+                <geom size= " 0.146208 0.039725 0.101462 "  type="box" material="geomKeypad" name="keypizzlemynizzle" />
             </body>
-            <body name="cabinet_left_hinge" pos= " 0.090399 -0.158343 0.097079 " >
-                <inertial pos= " 0.000000 0.118757 0.000000 "  mass="1" diaginertia="1 1 1" />
+            <body name="cabinet_left_hinge" pos= " 0.151424 -0.158899 0.106679 " >
+                <inertial pos= " 0.000000 0.119174 0.000000 "  mass="1" diaginertia="1 1 1" />
                 <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range= "-2.3 0"  />
-                <geom size= " 0.005555 0.118757 0.097079 "  pos= " 0.000000 0.118757 0.000000 "  type="box" material="geomObj" name="g"/>
-                <body name="handle_link" pos= " 0.010000 0.207515 0.000000 " >
+                <geom size= " 0.005216 0.119174 0.106679 "  pos= " 0.000000 0.119174 0.000000 "  type="box" material="geomObj" name="g"/>
+                <body name="handle_link" pos= " 0.010000 0.208348 0.000000 " >
                     <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
-                    <geom size= " 0.010000 0.010000 0.097079 "  type="box" material="geomHandle" name="h"/>
+                    <geom size= " 0.010000 0.010000 0.106679 "  type="box" material="geomHandle" name="h"/>
                 </body>
             </body>
         </body>
@@ -67,7 +67,7 @@
             <inertial pos= " 0.00 0.0 0.000000 " mass="1" diaginertia="1 1 1" />
             <joint name="cam_j" pos="0.0 0 0" axis = "1 0 0" type="free" />
         </body>
-        <!--body name="TESTING" pos= " 1.455030 -0.269061 -0.180391 "  quat= " 0.271585 0.000000 0.000000 0.962415" >
+        <!--body name="TESTING" pos= " 0.837733 -0.023488 -0.393167 "  quat= " -0.070440 0.000000 0.000000 0.997516" >
             <geom size="0.025" type="sphere" rgba="1 1 1 1"/>
             <body name="x_axis" >
                 <geom size="0.01" fromto="0 0 0 0.2 0 0" type="cylinder" rgba="1 0 0 1"/>
@@ -79,7 +79,7 @@
                 <geom size="0.01" fromto="0 0 0 0 0 0.2" type="cylinder" rgba="0 0 1 1"/>
             </body>
         </body-->
-        <!--body name="TESTING" pos= " 1.455030 -0.269061 -0.180391 "  quat= " 0.271585 0.000000 0.000000 0.962415" >
+        <!--body name="TESTING" pos= " 0.837733 -0.023488 -0.393167 "  quat= " -0.070440 0.000000 0.000000 0.997516" >
             <geom size="0.05" type="sphere" rgba="1 1 1 1"/>
             <body name="x_axis" pos="0.1 0 0.00">
                 <geom size="0.1 0.01 0.01" type="box" rgba="1 0 0 1"/>
