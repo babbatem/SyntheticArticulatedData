@@ -93,6 +93,12 @@ def build_microwave(length, width, height, thicc, left, set_pose=None, set_rot=N
     znear, zfar, fovy = get_cam_params()
     cab = ArticulatedObject(0, geometry, parameters, '', base_xyz, base_quat)
 
+    # FOR PY-BULLET
+    cab.control = [0,0,0,0,0,-2,0,0]
+    cab.joint_index = 5
+    cab.name = 'microwave'
+    cab.joint_type = 'revolute'
+
     znear_str= make_single_string(znear)
     zfar_str = make_single_string(zfar)
     fovy_str = make_single_string(fovy)
@@ -178,7 +184,7 @@ def write_xml(ax_string, axquat_string, base_origin, base_orientation, base_size
             </body>
             <body name="cabinet_left_hinge" pos='''+hinge_origin+'''>
                 <inertial pos='''+door_origin+''' mass="1" diaginertia="1 1 1" />
-                <joint name="bottom_left_hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge_range+''' />
+                <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge_range+''' />
                 <geom size='''+door_size+''' pos='''+door_origin+''' type="box" material="geomObj" name="g"/>
                 <body name="handle_link" pos='''+handle_origin+'''>
                     <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />

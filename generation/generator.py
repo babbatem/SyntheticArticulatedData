@@ -3,6 +3,8 @@ import os
 import csv
 import copy
 
+import numpy as np
+import random
 import cv2
 import pyro
 import pyro.distributions as dist
@@ -34,6 +36,27 @@ def buffer_to_real(z, zfar, znear):
 
 def vertical_flip(img):
     return np.flip(img, axis=0)
+
+
+
+def sp_noise(image,prob):
+    '''
+    Add salt and pepper noise to image
+    prob: Probability of the noise
+    '''
+    output = np.zeros(image.shape,np.uint8)
+    thres = 1 - prob 
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            rdn = random.random()
+            if rdn < prob:
+                output[i][j] = 0
+            elif rdn > thres:
+                output[i][j] = 255
+            else:
+                output[i][j] = image[i][j]
+    return output
+
 
 class SceneGenerator():
     def __init__(self, root_dir='bull/test_cabinets/solo', masked=False, debug_flag=False):
@@ -159,7 +182,7 @@ class SceneGenerator():
             raise 'uh oh, object not implemented!'
         return obj
 
-    def generate_scenes(self, N, objtype, write_csv=True, save_imgs=True, mean_flag=False, left_only=False, cute_flag=False):
+    def generate_scenes(self, N, objtype, write_csv=True, save_imgs=True, mean_flag=False, left_only=False, cute_flag=False, test=False, video=False):
         fname=os.path.join(self.savedir, 'params.csv')
         self.img_idx = 0
         with open(fname, 'a') as csvfile:
@@ -238,8 +261,16 @@ class SceneGenerator():
                     imgfname = os.path.join(self.savedir, 'img'+str(self.img_idx).zfill(6)+'.png')
                     depth_imgfname = os.path.join(self.savedir, 'depth_img'+str(self.img_idx).zfill(6)+'.png')
                     integer_depth = norm_depth * 255
+
                     cv2.imwrite(imgfname, img)
                     cv2.imwrite(depth_imgfname, integer_depth)
+
+                    # noise_img = sp_noise(img,0.1)
+                    # cv2.imwrite(imgfname, noise_img)
+
+                    # noise_integer_depth = sp_noise(integer_depth,0.1)
+                    # cv2.imwrite(depth_imgfname, noise_integer_depth)
+                 
 
                 # if IMG_WIDTH != 192 or IMG_HEIGHT != 108:
                 #     depth = cv2.resize(norm_depth, (192,108))
@@ -252,7 +283,6 @@ class SceneGenerator():
                 self.img_idx += 1
 
             t += 1
-
 
 # shapes and stuff
 # if 1DoF, params is length 10. If 2DoF, params is length 20.

@@ -14,7 +14,7 @@ d_thicc=dist.Uniform(0.03, 0.05)
 d_left=dist.Bernoulli(0.5)
 d_mass=dist.Uniform(5.0, 30.0)
 
-def sample_cabinet(mean_flag):
+def sample_cabinet(mean_flag=False):
     if mean_flag:
         length=d_len.mean
         width =d_width.mean
@@ -100,6 +100,12 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None, set_rot=Non
     parameters = np.array(params) # shape = 1, 2, 3, length = 6
     cab = ArticulatedObject(2, geometry, parameters, '', base_xyz, base_quat)
 
+    # FOR PY-BULLET
+    cab.control = [0,0,0,0, -2 if left else 2, 0, 0]
+    cab.joint_index = 4
+    cab.name = 'cabinet'
+    cab.joint_type = 'revolute'
+
     # FOR TESTING
     post_params = get_cam_relative_params2(cab)
     axis=post_params[:3]
@@ -157,7 +163,7 @@ def build_cabinet(length, width, height, thicc, left, set_pose=None, set_rot=Non
                 </body>
                 <body name="cabinet_left_hinge" pos='''+hinge_origin+'''>
                     <inertial pos='''+door_origin+''' mass="1" diaginertia="1 1 1" />
-                    <joint name="bottom_left_hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge_range+''' />
+                    <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge_range+''' />
                     <geom size='''+door_size+''' pos='''+door_origin+''' type="box" material="geomObj" name="g"/>
                     <body name="handle_link" pos='''+handle_origin+'''>
                         <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
@@ -184,6 +190,10 @@ def test():
     from mujoco_py.modder import TextureModder
     l,w,h,t,left,m=sample_cabinet()
     cab=build_cabinet(l,w,h,t,left)
+    filename = 'test.urdf'
+    with open(filename, "w") as text_file:
+        text_file.write(cab.xml)
+
     # print(cab.xml)
     model = load_model_from_xml(cab.xml)
     sim = MjSim(model)

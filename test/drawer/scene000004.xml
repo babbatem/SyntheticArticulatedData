@@ -1,0 +1,78 @@
+
+    <mujoco model="drawer">
+        <compiler angle="radian" eulerseq='zxy' />
+        <option gravity = "0 0 0" />
+        <option>
+            <flag contact = "disable"/>
+        </option>
+        <statistic	extent="1.0" center="0.0 0.0 0.0"/>
+        <visual>
+            <map fogstart="3" fogend="5" force="0.1" znear=" 0.100000 " zfar=" 12.000000 "/>
+        </visual>
+        <size njmax="500" nconmax="100" />
+        <actuator>
+            <velocity joint="drawerJ" name="viva_revolution" kv='10'></velocity>
+            <!--position joint="drawerJ" name="viva_position" kp='10'></position-->
+        </actuator>
+        <asset>
+            <texture builtin="flat" name="objtex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
+            <texture builtin="flat" name="handletex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
+            <material name="geomObj" shininess="0.03" specular="0.75" texture="objtex"></material>
+            <material name="geomHandle" shininess="0.03" specular="0.75" texture="handletex"></material>
+        </asset>
+        <worldbody>
+            <body name="cabinet_bottom" pos= " 1.228207 0.420735 -0.334569 "  quat= " -0.014712 0.000000 0.000000 0.999892" >
+                <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                <geom size= " 0.304619 0.274086 0.017022 "  type="box" material="geomObj" name="b"/>
+                <body name="cabinet_left" pos= " 0.000000 -0.257064 0.079563 " >
+                    <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                    <geom size= " 0.304619 0.017022 0.079563 "  type="box" material="geomObj" name="c" />
+                </body>
+                <body name="cabinet_right" pos= " 0.000000 0.257064 0.079563 " >
+                    <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                    <geom size= " 0.304619 0.017022 0.079563 "  type="box" material="geomObj" name="d" />
+                </body>
+                <body name="cabinet_top" pos= " 0.000000 0.000000 0.159126 " >
+                    <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                    <geom size= " 0.304619 0.274086 0.017022 "  type="box" material="geomObj" name="e"/>
+                </body>
+                <body name="cabinet_back" pos= " -0.287597 0.000000 0.079563 "  >
+                    <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                    <geom size= " 0.017022 0.274086 0.079563 "  type="box" material="geomObj" name="f" />
+                </body>
+                <body name="drawer" pos= " 0.000000 0.000000 0.008511 "  >
+                    <geom size= " 0.287597 0.257064 0.017022 "  type="box" material="geomObj" name="ddddfadfadsfac" />
+                    <joint name="drawerJ" pos="0 0 0" axis="1 0 0" type="slide" limited="true" range= "0  0.4569287449121475 "  />
+                    <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                    <body name="drawer_left" pos= " 0.000000 -0.240042 0.079563 " >
+                        <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                        <geom size= " 0.287597 0.017022 0.062541 "  type="box" material="geomObj" name="ddc" />
+                    </body>
+                    <body name="drawer_right" pos= " 0.000000 0.240042 0.079563 " >
+                        <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                        <geom size= " 0.287597 0.017022 0.062541 "  type="box" material="geomObj" name="dddd" />
+                    </body>
+                    <body name="drawer_front" pos= " 0.270575 0.000000 0.079563 " >
+                        <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                        <geom size= " 0.017022 0.257064 0.062541 "  type="box" material="geomObj" name="eeeee"/>
+                    </body>
+                    <body name="drawer_back" pos= " -0.287597 0.000000 0.079563 "  >
+                        <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                        <geom size= " 0.017022 0.257064 0.062541 "  type="box" material="geomObj" name="fffff" />
+                    </body>
+                    <body name="knob" pos= " 0.304619 0.000000 0.079563 " >
+                        <inertial pos="0 0 0" mass="0.1" diaginertia="0.1 0.1 0.1" />
+                        <geom size= " 0.008462 0.065359 0.015764 "  pos="0 0 0" type="box" material="geomHandle" name="handle"/>
+                    </body>
+                </body>
+            </body>
+            <body name="external_camera_body_0" pos="0.0 0 0.00">
+                <camera euler="-1.57 1.57 0.0" fovy=" 54.280851 " name="external_camera_0" pos="0.0 0 0"></camera>
+                <inertial pos= " 0.00 0.0 0.000000 " mass="1" diaginertia="1 1 1" />
+                <joint name="cam_j" pos="0.0 0 0" axis = "1 0 0" type="free" />
+            </body>
+            <!--body name="TESTING" pos= " 0.923720 0.411772 -0.175444 "  quat= " -0.014712 0.000000 0.000000 0.999892" >
+                <geom size="0.05" type="sphere" />
+            </body-->
+        </worldbody>
+    </mujoco>

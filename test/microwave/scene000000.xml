@@ -1,0 +1,95 @@
+
+<mujoco model="cabinet">
+    <compiler angle="radian" eulerseq='zxy' />
+    <option gravity = "0 0 0" />
+    <option>
+        <flag contact = "disable"/>
+    </option>
+    <statistic	extent="1.0" center="0.0 0.0 0.0"/>
+    <visual>
+        <map fogstart="3" fogend="5" force="0.1" znear=" 0.100000 " zfar=" 12.000000 "/>
+    </visual>
+    <size njmax="500" nconmax="100" />
+    <actuator>
+        <velocity joint="bottom_left_hinge" name="viva_revolution" kv='10'></velocity>
+        <!--position joint="bottom_left_hinge" name="viva_la_position" kp='10'></position-->
+        <!--velocity joint="cam_j" name="moving_cam" kv="10" ></velocity-->
+    </actuator>
+    <asset>
+        <texture builtin="flat" name="tabletex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
+        <texture builtin="flat" name="objtex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
+        <texture builtin="flat" name="handletex" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
+        <texture builtin="flat" name="wallpaper" height="32" width="32" rgb1="1 0 0" type="cube"></texture>
+        <texture builtin="flat" name="kp" height="32" width="32" rgb1="1 1 1" type="cube"></texture>
+        <material name="geomTable" shininess="0.03" specular="0.75" texture="tabletex"></material>
+        <material name="geomObj" shininess="0.03" specular="0.75" texture="objtex"></material>
+        <material name="geomHandle" shininess="0.03" specular="0.75" texture="handletex"></material>
+        <material name="ax" shininess="0.03" specular="0.75" texture="wallpaper"></material>
+        <material name="bg" shininess="0.03" specular="0.75" texture="wallpaper"></material>
+        <material name="geomKeypad" shininess="0.03" specular="0.75" texture="kp"></material>
+    </asset>
+    <worldbody>
+        <body name="cabinet_bottom" pos= " 1.758592 0.395685 0.021004 "  quat= " 0.024221 0.000000 0.000000 0.999707" >
+            <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+            <geom size= " 0.131356 0.177316 0.005643 "  type="box" material="geomObj" name="b"/>
+            <body name="cabinet_left" pos= " 0.000000 -0.171673 0.124107 " >
+                <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                <geom size= " 0.131356 0.005643 0.124107 "  type="box" material="geomObj" name="c" />
+            </body>
+            <body name="cabinet_right" pos= " 0.000000 0.171673 0.124107 " >
+                <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                <geom size= " 0.131356 0.005643 0.124107 "  type="box" material="geomObj" name="d" />
+            </body>
+            <body name="cabinet_top" pos= " 0.000000 0.000000 0.248214 " >
+                <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                <geom size= " 0.131356 0.177316 0.005643 "  type="box" material="geomObj" name="e"/>
+            </body>
+            <body name="cabinet_back" pos= " -0.125713 0.000000 0.124107 "  >
+                <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                <geom size= " 0.005643 0.177316 0.124107 "  type="box" material="geomObj" name="f" />
+            </body>
+            <body name="cabinet_keypad" pos= " 0.005643 0.131987 0.124107 " >
+                <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                <geom size= " 0.125713 0.044329 0.118464 "  type="box" material="geomKeypad" name="keypizzlemynizzle" />
+            </body>
+            <body name="cabinet_left_hinge" pos= " 0.131356 -0.177316 0.124107 " >
+                <inertial pos= " 0.000000 0.132987 0.000000 "  mass="1" diaginertia="1 1 1" />
+                <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range= "-2.3 0"  />
+                <geom size= " 0.005643 0.132987 0.124107 "  pos= " 0.000000 0.132987 0.000000 "  type="box" material="geomObj" name="g"/>
+                <body name="handle_link" pos= " 0.010000 0.235974 0.000000 " >
+                    <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
+                    <geom size= " 0.010000 0.010000 0.124107 "  type="box" material="geomHandle" name="h"/>
+                </body>
+            </body>
+        </body>
+        <body name="external_camera_body_0" pos="0.0 0 0.00" >
+            <camera euler="-1.57 1.57 0.0" fovy=" 54.280851 " name="external_camera_0" pos="0.0 0 0"></camera>
+            <inertial pos= " 0.00 0.0 0.000000 " mass="1" diaginertia="1 1 1" />
+            <joint name="cam_j" pos="0.0 0 0" axis = "1 0 0" type="free" />
+        </body>
+        <!--body name="TESTING" pos= " 1.635978 0.579154 0.145111 "  quat= " 0.024221 0.000000 0.000000 0.999707" >
+            <geom size="0.025" type="sphere" rgba="1 1 1 1"/>
+            <body name="x_axis" >
+                <geom size="0.01" fromto="0 0 0 0.2 0 0" type="cylinder" rgba="1 0 0 1"/>
+            </body>
+            <body name="y_axis" >
+                <geom size="0.01" fromto="0 0 0 0 0.2 0" type="cylinder" rgba="0 1 0 1"/>
+            </body>
+            <body name="z_axis" >
+                <geom size="0.01" fromto="0 0 0 0 0 0.2" type="cylinder" rgba="0 0 1 1"/>
+            </body>
+        </body-->
+        <!--body name="TESTING" pos= " 1.635978 0.579154 0.145111 "  quat= " 0.024221 0.000000 0.000000 0.999707" >
+            <geom size="0.05" type="sphere" rgba="1 1 1 1"/>
+            <body name="x_axis" pos="0.1 0 0.00">
+                <geom size="0.1 0.01 0.01" type="box" rgba="1 0 0 1"/>
+            </body>
+            <body name="y_axis" pos="0.0 0.1 0.00">
+                <geom size="0.01 0.1 0.01" type="box" rgba="0 1 0 1"/>
+            </body>
+            <body name="z_axis" pos="0.0 0 0.1">
+                <geom size="0.01 0.01 0.1" type="box" rgba="0 0 1 1"/>
+            </body>
+        </body-->
+    </worldbody>
+</mujoco>

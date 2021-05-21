@@ -100,6 +100,9 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None, set_rot=No
 
     parameters = np.array([[param_axis1, param_radius1],[param_axis2, param_radius2] ]) # shape = 1, 2, 3, length = 6
     cab = ArticulatedObject(4, geometry, parameters, '', base_xyz, base_quat)
+    
+    # FOR PY_BULLET
+    cab.control = [0, 0, 0, 0, -2.3, 0, 0, 2.3, 0, 0]
 
     # FOR TESTING
     ax = cab.params[0][0]
@@ -174,7 +177,7 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None, set_rot=No
                 </body>
                 <body name="cabinet_left_hinge" pos='''+hinge1_origin+'''>
                     <inertial pos='''+door1_origin+''' mass="1" diaginertia="1 1 1" />
-                    <joint name="bottom_left_hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge1_range+''' />
+                    <joint name="bottom_left_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge1_range+''' />
                     <geom size='''+door_size+''' pos='''+door1_origin+''' type="box" material="geomObj" name="g"/>
                     <body name="handle_link" pos='''+handle1_origin+'''>
                         <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />
@@ -183,7 +186,7 @@ def build_cabinet2(length, width, height, thicc, left, set_pose=None, set_rot=No
                 </body>
                 <body name="cabinet_right_hinge" pos='''+hinge2_origin+'''>
                     <inertial pos='''+door2_origin+''' mass="1" diaginertia="1 1 1" />
-                    <joint name="bottom_right_hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge2_range+''' />
+                    <joint name="bottom_right_hinge" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range='''+hinge2_range+''' />
                     <geom size='''+door_size+''' pos='''+door2_origin+''' type="box" material="geomObj" name="q"/>
                     <body name="handle2_link" pos='''+handle2_origin+'''>
                         <inertial pos="0 0 0" mass="1" diaginertia="1 1 1" />

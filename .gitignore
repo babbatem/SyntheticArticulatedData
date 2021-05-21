@@ -1,0 +1,11 @@
+# Python artifacts
+__pycache__/
+
+# Generated MJCF files, RGB images, and depth images
+generated_mjcf/
+rgb_images/
+depth_images/
+
+# Miscellaneous
+.DS_Store
+
